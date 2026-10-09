@@ -30,10 +30,7 @@ Future<List<PickedUpload>> pickUploads(BuildContext context, {bool camera = fals
     final photo = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 80, maxWidth: 2400);
     if (photo != null) picked.add(PickedUpload(photo.name.isEmpty ? 'photo.jpg' : photo.name, await photo.readAsBytes()));
   } else {
-    final files = await FilePicker.pickFiles(
-      type: imagesOnly ? FileType.image : FileType.custom,
-      allowedExtensions: imagesOnly ? null : allowed,
-    );
+    final files = await FilePicker.pickFiles(type: imagesOnly ? FileType.image : FileType.custom, allowedExtensions: imagesOnly ? null : allowed);
     for (final f in files) {
       picked.add(PickedUpload(f.name, await f.readAsBytes()));
     }
@@ -65,19 +62,14 @@ Future<List<String>> queueUploads(
   for (final u in uploads) {
     final id = const Uuid().v4();
     final ref = await platform.persistOutboxFile(u.bytes, id);
-    await sync.enqueue(OutboxItem(
-      id: id,
-      kind: 'upload_attachment',
-      ticketUuid: ticketUuid,
-      payload: {
-        'ticket_id': ?ticketId,
-        'file_ref': ref,
-        'filename': u.name,
-        'size': u.bytes.length,
-        'work_log_uuid': ?workLogUuid,
-        'is_internal': internal,
-      },
-    ));
+    await sync.enqueue(
+      OutboxItem(
+        id: id,
+        kind: 'upload_attachment',
+        ticketUuid: ticketUuid,
+        payload: {'ticket_id': ?ticketId, 'file_ref': ref, 'filename': u.name, 'size': u.bytes.length, 'work_log_uuid': ?workLogUuid, 'is_internal': internal},
+      ),
+    );
     ids.add(id);
   }
   return ids;
@@ -94,23 +86,31 @@ Future<void> openAttachment(BuildContext context, Attachment a) async {
       await showDialog<void>(
         context: context,
         builder: (c) => Dialog(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            ListTile(
-              title: Text(a.name),
-              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                IconButton(
-                  tooltip: 'Save',
-                  icon: const Icon(Icons.download),
-                  onPressed: () async {
-                    final path = await platform.saveDownload(file.bytes, a.name, a.mimeType);
-                    if (c.mounted) showInfo(c, 'Saved $path');
-                  },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(a.name),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'Save',
+                      icon: const Icon(Icons.download),
+                      onPressed: () async {
+                        final path = await platform.saveDownload(file.bytes, a.name, a.mimeType);
+                        if (c.mounted) showInfo(c, 'Saved $path');
+                      },
+                    ),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(c)),
+                  ],
                 ),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(c)),
-              ]),
-            ),
-            Flexible(child: InteractiveViewer(child: Image.memory(file.bytes, fit: BoxFit.contain))),
-          ]),
+              ),
+              Flexible(
+                child: InteractiveViewer(child: Image.memory(file.bytes, fit: BoxFit.contain)),
+              ),
+            ],
+          ),
         ),
       );
     } else {
@@ -128,10 +128,10 @@ class AttachmentChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ActionChip(
-        avatar: Icon(attachment.isImage ? Icons.image_outlined : Icons.attach_file, size: 18),
-        label: Text('${attachment.name} (${fmtBytes(attachment.size)})', overflow: TextOverflow.ellipsis),
-        onPressed: () => openAttachment(context, attachment),
-      );
+    avatar: Icon(attachment.isImage ? Icons.image_outlined : Icons.attach_file, size: 18),
+    label: Text('${attachment.name} (${fmtBytes(attachment.size)})', overflow: TextOverflow.ellipsis),
+    onPressed: () => openAttachment(context, attachment),
+  );
 }
 
 /// Pending (not yet uploaded) file shown in composers and forms.
@@ -141,9 +141,6 @@ class PendingUploadChip extends StatelessWidget {
   final VoidCallback? onRemove;
 
   @override
-  Widget build(BuildContext context) => InputChip(
-        avatar: const Icon(Icons.attach_file, size: 18),
-        label: Text('${upload.name} (${fmtBytes(upload.bytes.length)})'),
-        onDeleted: onRemove,
-      );
+  Widget build(BuildContext context) =>
+      InputChip(avatar: const Icon(Icons.attach_file, size: 18), label: Text('${upload.name} (${fmtBytes(upload.bytes.length)})'), onDeleted: onRemove);
 }

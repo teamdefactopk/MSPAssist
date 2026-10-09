@@ -16,16 +16,16 @@ class _NavItem {
 }
 
 List<_NavItem> _itemsFor(Me me) => [
-      const _NavItem('/dashboard', 'Dashboard', Icons.dashboard_outlined, Icons.dashboard),
-      const _NavItem('/tickets', 'Tickets', Icons.confirmation_number_outlined, Icons.confirmation_number),
-      _NavItem('/clients', me.isStaff ? 'Clients' : 'Organization', Icons.business_outlined, Icons.business),
-      if (me.can('manage_users')) const _NavItem('/users', 'Users', Icons.people_outline, Icons.people),
-      if (me.can('view_reports')) const _NavItem('/reports', 'Reports', Icons.bar_chart_outlined, Icons.bar_chart),
-      if (me.can('manage_settings')) const _NavItem('/settings', 'Settings', Icons.tune_outlined, Icons.tune),
-      const _NavItem('/notifications', 'Notifications', Icons.notifications_none, Icons.notifications),
-      const _NavItem('/outbox', 'Sync queue', Icons.sync_outlined, Icons.sync),
-      const _NavItem('/profile', 'Profile', Icons.person_outline, Icons.person),
-    ];
+  const _NavItem('/dashboard', 'Dashboard', Icons.dashboard_outlined, Icons.dashboard),
+  const _NavItem('/tickets', 'Tickets', Icons.confirmation_number_outlined, Icons.confirmation_number),
+  _NavItem('/clients', me.isStaff ? 'Clients' : 'Organization', Icons.business_outlined, Icons.business),
+  if (me.can('manage_users')) const _NavItem('/users', 'Users', Icons.people_outline, Icons.people),
+  if (me.can('view_reports')) const _NavItem('/reports', 'Reports', Icons.bar_chart_outlined, Icons.bar_chart),
+  if (me.can('manage_settings')) const _NavItem('/settings', 'Settings', Icons.tune_outlined, Icons.tune),
+  const _NavItem('/notifications', 'Notifications', Icons.notifications_none, Icons.notifications),
+  const _NavItem('/outbox', 'Sync queue', Icons.sync_outlined, Icons.sync),
+  const _NavItem('/profile', 'Profile', Icons.person_outline, Icons.person),
+];
 
 /// Lets screens inside the shell open the phone navigation drawer.
 class ShellScope extends InheritedWidget {
@@ -82,10 +82,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       context.go(items[i].path);
     }
 
-    final body = Column(children: [
-      const _ConnectivityBanner(),
-      Expanded(child: widget.child),
-    ]);
+    final body = Column(
+      children: [
+        const _ConnectivityBanner(),
+        Expanded(child: widget.child),
+      ],
+    );
 
     return ShellScope(
       scaffoldKey: _scaffoldKey,
@@ -104,26 +106,28 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             : null,
         body: isPhone
             ? body
-            : Row(children: [
-                NavigationRail(
-                  extended: size == ScreenSize.desktop,
-                  minExtendedWidth: 200,
-                  selectedIndex: selected < 0 ? null : selected,
-                  onDestinationSelected: go,
-                  labelType: size == ScreenSize.desktop ? NavigationRailLabelType.none : NavigationRailLabelType.all,
-                  leading: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: size == ScreenSize.desktop
-                        ? const Text('MSPAssist', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))
-                        : const Icon(Icons.support_agent),
+            : Row(
+                children: [
+                  NavigationRail(
+                    extended: size == ScreenSize.desktop,
+                    minExtendedWidth: 200,
+                    selectedIndex: selected < 0 ? null : selected,
+                    onDestinationSelected: go,
+                    labelType: size == ScreenSize.desktop ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+                    leading: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: size == ScreenSize.desktop
+                          ? const Text('MSPAssist', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18))
+                          : const Icon(Icons.support_agent),
+                    ),
+                    destinations: [
+                      for (final i in items) NavigationRailDestination(icon: Icon(i.icon), selectedIcon: Icon(i.selectedIcon), label: Text(i.label)),
+                    ],
                   ),
-                  destinations: [
-                    for (final i in items) NavigationRailDestination(icon: Icon(i.icon), selectedIcon: Icon(i.selectedIcon), label: Text(i.label)),
-                  ],
-                ),
-                const VerticalDivider(width: 1),
-                Expanded(child: body),
-              ]),
+                  const VerticalDivider(width: 1),
+                  Expanded(child: body),
+                ],
+              ),
       ),
     );
   }
@@ -134,14 +138,17 @@ class _DrawerHeader extends StatelessWidget {
   final Me me;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(28, 16, 16, 12),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('MSPAssist', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 4),
-          Text('${me.name} · ${me.roleLabel}', style: Theme.of(context).textTheme.bodySmall),
-          if (me.organizationName != null) Text(me.organizationName!, style: Theme.of(context).textTheme.bodySmall),
-        ]),
-      );
+    padding: const EdgeInsets.fromLTRB(28, 16, 16, 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('MSPAssist', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 4),
+        Text('${me.name} · ${me.roleLabel}', style: Theme.of(context).textTheme.bodySmall),
+        if (me.organizationName != null) Text(me.organizationName!, style: Theme.of(context).textTheme.bodySmall),
+      ],
+    ),
+  );
 }
 
 class _ConnectivityBanner extends StatelessWidget {

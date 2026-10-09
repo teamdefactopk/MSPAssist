@@ -40,12 +40,12 @@ class ApiClient {
   }
 
   Map<String, String> _headers({bool json = true}) => {
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        if (json) 'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-        if (platform.usesCookieAuth && platform.readXsrfToken() != null) 'X-XSRF-TOKEN': platform.readXsrfToken()!,
-      };
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    if (json) 'Content-Type': 'application/json',
+    if (token != null) 'Authorization': 'Bearer $token',
+    if (platform.usesCookieAuth && platform.readXsrfToken() != null) 'X-XSRF-TOKEN': platform.readXsrfToken()!,
+  };
 
   /// Web only: obtain the XSRF-TOKEN cookie before the first state-changing request.
   Future<void> ensureCsrfCookie({bool force = false}) async {
@@ -54,8 +54,7 @@ class ApiClient {
     await _send(() => _http.get(config.apiBaseUrl.resolve('../../sanctum/csrf-cookie'), headers: _headers()));
   }
 
-  Future<dynamic> get(String path, {Map<String, Object?>? query}) =>
-      _json(() => _http.get(uri(path, query), headers: _headers()));
+  Future<dynamic> get(String path, {Map<String, Object?>? query}) => _json(() => _http.get(uri(path, query), headers: _headers()));
 
   Future<dynamic> post(String path, {Object? body}) => _mutating(() => _http.post(uri(path), headers: _headers(), body: jsonEncode(body ?? {})));
 
@@ -140,12 +139,12 @@ class ApiClient {
   }
 
   static String _defaultMessage(int status) => switch (status) {
-        401 => 'Your session has expired. Please sign in again.',
-        403 => 'You do not have permission to do that.',
-        404 => 'Not found.',
-        409 => 'This item was changed by someone else.',
-        419 => 'Your session expired. Please try again.',
-        429 => 'Too many requests. Please wait a moment.',
-        _ => 'Unexpected server error ($status).',
-      };
+    401 => 'Your session has expired. Please sign in again.',
+    403 => 'You do not have permission to do that.',
+    404 => 'Not found.',
+    409 => 'This item was changed by someone else.',
+    419 => 'Your session expired. Please try again.',
+    429 => 'Too many requests. Please wait a moment.',
+    _ => 'Unexpected server error ($status).',
+  };
 }

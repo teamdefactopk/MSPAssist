@@ -50,9 +50,11 @@ class SqliteLocalStore implements LocalStore {
         version: 1,
         onCreate: (db, version) async {
           await db.execute('CREATE TABLE cache (key TEXT PRIMARY KEY, json TEXT NOT NULL, updated_at TEXT NOT NULL)');
-          await db.execute('CREATE TABLE outbox (id TEXT PRIMARY KEY, kind TEXT NOT NULL, payload TEXT NOT NULL, '
-              'status TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, error TEXT, created_at TEXT NOT NULL, '
-              'next_attempt_at TEXT, ticket_uuid TEXT)');
+          await db.execute(
+            'CREATE TABLE outbox (id TEXT PRIMARY KEY, kind TEXT NOT NULL, payload TEXT NOT NULL, '
+            'status TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, error TEXT, created_at TEXT NOT NULL, '
+            'next_attempt_at TEXT, ticket_uuid TEXT)',
+          );
         },
       ),
     );
@@ -65,11 +67,11 @@ class SqliteLocalStore implements LocalStore {
   }
 
   @override
-  Future<void> putJson(String key, Json value) => _d.insert(
-        'cache',
-        {'key': key, 'json': jsonEncode(value), 'updated_at': DateTime.now().toUtc().toIso8601String()},
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+  Future<void> putJson(String key, Json value) => _d.insert('cache', {
+    'key': key,
+    'json': jsonEncode(value),
+    'updated_at': DateTime.now().toUtc().toIso8601String(),
+  }, conflictAlgorithm: ConflictAlgorithm.replace);
 
   @override
   Future<List<Json>> getJsonByPrefix(String prefix) async {
@@ -81,8 +83,7 @@ class SqliteLocalStore implements LocalStore {
   Future<void> delete(String key) => _d.delete('cache', where: 'key = ?', whereArgs: [key]);
 
   @override
-  Future<List<OutboxItem>> outbox() async =>
-      (await _d.query('outbox', orderBy: 'created_at ASC')).map(OutboxItem.fromRow).toList();
+  Future<List<OutboxItem>> outbox() async => (await _d.query('outbox', orderBy: 'created_at ASC')).map(OutboxItem.fromRow).toList();
 
   @override
   Future<void> saveOutbox(OutboxItem item) => _d.insert('outbox', item.toRow(), conflictAlgorithm: ConflictAlgorithm.replace);

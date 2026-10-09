@@ -187,11 +187,8 @@ class SyncService extends ChangeNotifier {
   }
 
   /// Items that must reach the server before [item] can be sent.
-  static Iterable<String> dependenciesOf(OutboxItem item) => [
-        item.ticketUuid,
-        item.payload['work_log_uuid'] as String?,
-        ...((item.payload['depends_on'] as List?) ?? const []).cast<String>(),
-      ].whereType<String>();
+  static Iterable<String> dependenciesOf(OutboxItem item) =>
+      [item.ticketUuid, item.payload['work_log_uuid'] as String?, ...((item.payload['depends_on'] as List?) ?? const []).cast<String>()].whereType<String>();
 
   static Duration backoff(int attempts) => Duration(seconds: min(600, 5 * pow(2, max(0, attempts - 1)).toInt()));
 
@@ -227,11 +224,16 @@ class SyncService extends ChangeNotifier {
       case 'upload_attachment':
         final id = await _ticketId(item);
         final bytes = await platform.readOutboxFile(item.payload['file_ref'] as String);
-        final res = (await api.upload('tickets/$id/attachments', bytes: bytes, filename: item.payload['filename'] as String, fields: {
-          'uuid': item.id,
-          if (item.payload['work_log_uuid'] != null) 'work_log_uuid': item.payload['work_log_uuid'] as String,
-          if (item.payload['is_internal'] == true) 'is_internal': '1',
-        })) as Map;
+        final res = (await api.upload(
+          'tickets/$id/attachments',
+          bytes: bytes,
+          filename: item.payload['filename'] as String,
+          fields: {
+            'uuid': item.id,
+            if (item.payload['work_log_uuid'] != null) 'work_log_uuid': item.payload['work_log_uuid'] as String,
+            if (item.payload['is_internal'] == true) 'is_internal': '1',
+          },
+        )) as Map;
         return (res['data'] as Map).cast<String, dynamic>();
       default:
         throw StateError('Unknown outbox action ${item.kind}');

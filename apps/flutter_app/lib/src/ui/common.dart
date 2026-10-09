@@ -24,12 +24,12 @@ String fmtRelative(DateTime? d) {
   final text = a.inMinutes < 1
       ? 'just now'
       : a.inHours < 1
-          ? '${a.inMinutes}m'
-          : a.inDays < 1
-              ? '${a.inHours}h'
-              : a.inDays < 30
-                  ? '${a.inDays}d'
-                  : fmtDate(d);
+      ? '${a.inMinutes}m'
+      : a.inDays < 1
+      ? '${a.inHours}h'
+      : a.inDays < 30
+      ? '${a.inDays}d'
+      : fmtDate(d);
   if (text == 'just now' || a.inDays >= 30) return text;
   return future ? 'in $text' : '$text ago';
 }
@@ -50,30 +50,26 @@ String fmtBytes(int bytes) {
 String errorText(Object e) => e is ApiException ? e.firstError : e.toString();
 
 void showError(BuildContext context, Object e) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: Text(errorText(e)),
-    backgroundColor: Theme.of(context).colorScheme.error,
-  ));
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(e)), backgroundColor: Theme.of(context).colorScheme.error));
 }
 
-void showInfo(BuildContext context, String message) =>
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+void showInfo(BuildContext context, String message) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 
 Color priorityColor(String p) => switch (p) {
-      'critical' => Colors.red.shade700,
-      'high' => Colors.orange.shade800,
-      'medium' => Colors.blue.shade700,
-      _ => Colors.blueGrey,
-    };
+  'critical' => Colors.red.shade700,
+  'high' => Colors.orange.shade800,
+  'medium' => Colors.blue.shade700,
+  _ => Colors.blueGrey,
+};
 
 Color statusColor(String s) => switch (s) {
-      'open' => Colors.indigo,
-      'assigned' => Colors.blue,
-      'in_progress' => Colors.teal,
-      'waiting_client' || 'waiting_vendor' => Colors.amber.shade800,
-      'resolved' => Colors.green.shade700,
-      _ => Colors.grey.shade600,
-    };
+  'open' => Colors.indigo,
+  'assigned' => Colors.blue,
+  'in_progress' => Colors.teal,
+  'waiting_client' || 'waiting_vendor' => Colors.amber.shade800,
+  'resolved' => Colors.green.shade700,
+  _ => Colors.grey.shade600,
+};
 
 class Pill extends StatelessWidget {
   const Pill(this.label, {super.key, required this.color, this.icon});
@@ -83,13 +79,19 @@ class Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (icon != null) ...[Icon(icon, size: 12, color: color), const SizedBox(width: 4)],
-          Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
-        ]),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+    decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[Icon(icon, size: 12, color: color), const SizedBox(width: 4)],
+        Text(
+          label,
+          style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+      ],
+    ),
+  );
 }
 
 class StatusPill extends StatelessWidget {
@@ -104,8 +106,7 @@ class PriorityPill extends StatelessWidget {
   const PriorityPill(this.priority, {super.key});
   final String priority;
   @override
-  Widget build(BuildContext context) =>
-      Pill(priority[0].toUpperCase() + priority.substring(1), color: priorityColor(priority), icon: Icons.flag);
+  Widget build(BuildContext context) => Pill(priority[0].toUpperCase() + priority.substring(1), color: priorityColor(priority), icon: Icons.flag);
 }
 
 /// Shows the delivery state of a locally queued action. Queued items are
@@ -116,11 +117,11 @@ class OutboxBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => switch (item.status) {
-        OutboxStatus.pending => const Pill('Pending sync', color: Colors.orange, icon: Icons.schedule),
-        OutboxStatus.syncing => const Pill('Sending…', color: Colors.blue, icon: Icons.sync),
-        OutboxStatus.failed => const Pill('Failed', color: Colors.red, icon: Icons.error_outline),
-        OutboxStatus.conflict => const Pill('Conflict', color: Colors.deepPurple, icon: Icons.warning_amber),
-      };
+    OutboxStatus.pending => const Pill('Pending sync', color: Colors.orange, icon: Icons.schedule),
+    OutboxStatus.syncing => const Pill('Sending…', color: Colors.blue, icon: Icons.sync),
+    OutboxStatus.failed => const Pill('Failed', color: Colors.red, icon: Icons.error_outline),
+    OutboxStatus.conflict => const Pill('Conflict', color: Colors.deepPurple, icon: Icons.warning_amber),
+  };
 }
 
 class SyncedBadge extends StatelessWidget {
@@ -136,16 +137,19 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(error is ApiException && (error as ApiException).isNetwork ? Icons.cloud_off : Icons.error_outline, size: 48, color: Colors.grey),
-            const SizedBox(height: 12),
-            Text(errorText(error), textAlign: TextAlign.center),
-            if (onRetry != null) ...[const SizedBox(height: 12), FilledButton.tonal(onPressed: onRetry, child: const Text('Retry'))],
-          ]),
-        ),
-      );
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(error is ApiException && (error as ApiException).isNetwork ? Icons.cloud_off : Icons.error_outline, size: 48, color: Colors.grey),
+          const SizedBox(height: 12),
+          Text(errorText(error), textAlign: TextAlign.center),
+          if (onRetry != null) ...[const SizedBox(height: 12), FilledButton.tonal(onPressed: onRetry, child: const Text('Retry'))],
+        ],
+      ),
+    ),
+  );
 }
 
 class EmptyView extends StatelessWidget {
@@ -154,27 +158,30 @@ class EmptyView extends StatelessWidget {
   final IconData icon;
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 48, color: Colors.grey),
-            const SizedBox(height: 8),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
-          ]),
-        ),
-      );
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 48, color: Colors.grey),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class OfflineBanner extends StatelessWidget {
   const OfflineBanner({super.key, this.message = 'Offline — showing saved data. Changes will sync when you reconnect.'});
   final String message;
   @override
-  Widget build(BuildContext context) => MaterialBanner(
-        backgroundColor: Colors.amber.shade100,
-        leading: const Icon(Icons.cloud_off),
-        content: Text(message),
-        actions: const [SizedBox.shrink()],
-      );
+  Widget build(BuildContext context) =>
+      MaterialBanner(backgroundColor: Colors.amber.shade100, leading: const Icon(Icons.cloud_off), content: Text(message), actions: const [SizedBox.shrink()]);
 }
 
 /// Simple labelled value used on detail pages.
@@ -184,12 +191,18 @@ class InfoRow extends StatelessWidget {
   final String? value;
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(width: 140, child: Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant))),
-          Expanded(child: SelectableText(value == null || value!.isEmpty ? '—' : value!)),
-        ]),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 140,
+          child: Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        ),
+        Expanded(child: SelectableText(value == null || value!.isEmpty ? '—' : value!)),
+      ],
+    ),
+  );
 }
 
 class SectionCard extends StatelessWidget {
@@ -199,19 +212,24 @@ class SectionCard extends StatelessWidget {
   final Widget? trailing;
   @override
   Widget build(BuildContext context) => Card(
-        margin: const EdgeInsets.all(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
+    margin: const EdgeInsets.all(8),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
               Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium)),
               ?trailing,
-            ]),
-            const SizedBox(height: 8),
-            child,
-          ]),
-        ),
-      );
+            ],
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    ),
+  );
 }
 
 Future<bool> confirm(BuildContext context, String title, String message, {String action = 'Confirm', bool destructive = false}) async {
@@ -253,10 +271,7 @@ Future<String?> promptText(BuildContext context, String title, {String label = '
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: required && ctrl.text.trim().isEmpty ? null : () => Navigator.pop(c, ctrl.text.trim()),
-            child: Text(action),
-          ),
+          FilledButton(onPressed: required && ctrl.text.trim().isEmpty ? null : () => Navigator.pop(c, ctrl.text.trim()), child: Text(action)),
         ],
       ),
     ),

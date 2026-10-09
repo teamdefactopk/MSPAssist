@@ -50,12 +50,14 @@ class _ConversationViewState extends State<ConversationView> {
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(onStateChange: (s) {
-      final visible = s == AppLifecycleState.resumed;
-      if (visible && !_visible) _poll();
-      _visible = visible;
-      if (!visible) _pollTimer?.cancel();
-    });
+    _lifecycle = AppLifecycleListener(
+      onStateChange: (s) {
+        final visible = s == AppLifecycleState.resumed;
+        if (visible && !_visible) _poll();
+        _visible = visible;
+        if (!visible) _pollTimer?.cancel();
+      },
+    );
     _syncSub = context.services.sync.events.listen(_onSynced);
     _loadDraft();
     _loadLatest();
@@ -196,19 +198,21 @@ class _ConversationViewState extends State<ConversationView> {
     await context.services.repo.saveMessageDraft(_ticketId, '');
     final ids = files.isEmpty ? <String>[] : await queueUploads(sync, files, ticketUuid: t.uuid, ticketId: t.id, internal: internal);
     final id = const Uuid().v4();
-    await sync.enqueue(OutboxItem(
-      id: id,
-      kind: 'send_message',
-      ticketUuid: t.uuid,
-      payload: {
-        'uuid': id,
-        'ticket_id': t.id,
-        'body': body.isEmpty ? 'Attached ${files.length} file(s).' : body,
-        'is_internal': internal,
-        if (ids.isNotEmpty) 'attachment_uuids': ids,
-        if (ids.isNotEmpty) 'depends_on': ids,
-      },
-    ));
+    await sync.enqueue(
+      OutboxItem(
+        id: id,
+        kind: 'send_message',
+        ticketUuid: t.uuid,
+        payload: {
+          'uuid': id,
+          'ticket_id': t.id,
+          'body': body.isEmpty ? 'Attached ${files.length} file(s).' : body,
+          'is_internal': internal,
+          if (ids.isNotEmpty) 'attachment_uuids': ids,
+          if (ids.isNotEmpty) 'depends_on': ids,
+        },
+      ),
+    );
     _jumpToEnd();
   }
 
@@ -218,42 +222,50 @@ class _ConversationViewState extends State<ConversationView> {
     final queued = context.watch<SyncService>().items.where((i) => i.kind == 'send_message' && i.ticketUuid == widget.ticket.uuid).toList();
     final closed = widget.ticket.status == 'closed';
 
-    return Column(children: [
-      if (_fromCache) const OfflineBanner(message: 'Offline — showing saved messages. New messages will be queued, not delivered, until you reconnect.'),
-      Expanded(
-        child: _error != null && _messages.isEmpty
-            ? ErrorView(_error!, onRetry: _loadLatest)
-            : ListView(controller: _scroll, padding: const EdgeInsets.all(12), children: [
-                if (_hasMore)
-                  Center(
-                    child: TextButton.icon(
-                      onPressed: _loadingOlder ? null : _loadOlder,
-                      icon: const Icon(Icons.history),
-                      label: const Text('Load earlier messages'),
-                    ),
-                  ),
-                if (_messages.isEmpty && queued.isEmpty) const EmptyView('No messages yet.', icon: Icons.forum_outlined),
-                for (final m in _messages) _Bubble(message: m, mine: m.userId == me.id),
-                for (final q in queued) _QueuedBubble(item: q),
-              ]),
-      ),
-      const Divider(height: 1),
-      if (closed)
-        const Padding(padding: EdgeInsets.all(16), child: Text('This ticket is closed. Reopen it to continue the conversation.'))
-      else
-        _composer(me),
-    ]);
+    return Column(
+      children: [
+        if (_fromCache) const OfflineBanner(message: 'Offline — showing saved messages. New messages will be queued, not delivered, until you reconnect.'),
+        Expanded(
+          child: _error != null && _messages.isEmpty
+              ? ErrorView(_error!, onRetry: _loadLatest)
+              : ListView(
+                  controller: _scroll,
+                  padding: const EdgeInsets.all(12),
+                  children: [
+                    if (_hasMore)
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: _loadingOlder ? null : _loadOlder,
+                          icon: const Icon(Icons.history),
+                          label: const Text('Load earlier messages'),
+                        ),
+                      ),
+                    if (_messages.isEmpty && queued.isEmpty) const EmptyView('No messages yet.', icon: Icons.forum_outlined),
+                    for (final m in _messages) _Bubble(message: m, mine: m.userId == me.id),
+                    for (final q in queued) _QueuedBubble(item: q),
+                  ],
+                ),
+        ),
+        const Divider(height: 1),
+        if (closed)
+          const Padding(padding: EdgeInsets.all(16), child: Text('This ticket is closed. Reopen it to continue the conversation.'))
+        else
+          _composer(me),
+      ],
+    );
   }
 
   Widget _composer(Me me) => SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            if (_files.isNotEmpty)
-              Wrap(spacing: 6, children: [for (final f in _files) PendingUploadChip(f, onRemove: () => setState(() => _files.remove(f)))]),
-            if (me.can('internal_notes'))
-              Row(children: [
+    top: false,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_files.isNotEmpty) Wrap(spacing: 6, children: [for (final f in _files) PendingUploadChip(f, onRemove: () => setState(() => _files.remove(f)))]),
+          if (me.can('internal_notes'))
+            Row(
+              children: [
                 ChoiceChip(label: const Text('Reply to client'), selected: !_internal, onSelected: (_) => setState(() => _internal = false)),
                 const SizedBox(width: 8),
                 ChoiceChip(
@@ -262,8 +274,11 @@ class _ConversationViewState extends State<ConversationView> {
                   selected: _internal,
                   onSelected: (_) => setState(() => _internal = true),
                 ),
-              ]),
-            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              ],
+            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
               IconButton(
                 tooltip: 'Attach files',
                 icon: const Icon(Icons.attach_file),
@@ -303,10 +318,12 @@ class _ConversationViewState extends State<ConversationView> {
                 onPressed: _input.text.trim().isEmpty && _files.isEmpty ? null : _send,
                 icon: const Icon(Icons.send),
               ),
-            ]),
-          ]),
-        ),
-      );
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _Bubble extends StatelessWidget {
@@ -320,8 +337,8 @@ class _Bubble extends StatelessWidget {
     final color = message.isInternal
         ? Colors.amber.withValues(alpha: 0.18)
         : mine
-            ? scheme.primaryContainer
-            : scheme.surfaceContainerHighest;
+        ? scheme.primaryContainer
+        : scheme.surfaceContainerHighest;
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
       child: ConstrainedBox(
@@ -331,23 +348,29 @@ class _Bubble extends StatelessWidget {
           margin: const EdgeInsets.symmetric(vertical: 4),
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                if (message.isInternal) const Padding(padding: EdgeInsets.only(right: 4), child: Icon(Icons.lock_outline, size: 14)),
-                Text(message.userName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
-                if (message.fromStaff) const Padding(padding: EdgeInsets.only(left: 4), child: Icon(Icons.support_agent, size: 14)),
-                const SizedBox(width: 8),
-                Text(fmtDateTime(message.createdAt), style: Theme.of(context).textTheme.bodySmall),
-              ]),
-              if (message.isInternal) Text('Internal note — not visible to the client', style: Theme.of(context).textTheme.labelSmall),
-              const SizedBox(height: 4),
-              SelectableText(message.body),
-              if (message.attachments.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Wrap(spacing: 6, runSpacing: 6, children: [for (final a in message.attachments) AttachmentChip(a)]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (message.isInternal) const Padding(padding: EdgeInsets.only(right: 4), child: Icon(Icons.lock_outline, size: 14)),
+                    Text(message.userName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                    if (message.fromStaff) const Padding(padding: EdgeInsets.only(left: 4), child: Icon(Icons.support_agent, size: 14)),
+                    const SizedBox(width: 8),
+                    Text(fmtDateTime(message.createdAt), style: Theme.of(context).textTheme.bodySmall),
+                  ],
                 ),
-            ]),
+                if (message.isInternal) Text('Internal note — not visible to the client', style: Theme.of(context).textTheme.labelSmall),
+                const SizedBox(height: 4),
+                SelectableText(message.body),
+                if (message.attachments.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Wrap(spacing: 6, runSpacing: 6, children: [for (final a in message.attachments) AttachmentChip(a)]),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -372,21 +395,30 @@ class _QueuedBubble extends StatelessWidget {
           margin: const EdgeInsets.symmetric(vertical: 4),
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                OutboxBadge(item),
-                const SizedBox(width: 8),
-                Text(item.status == OutboxStatus.pending ? 'Not delivered yet' : '', style: Theme.of(context).textTheme.bodySmall),
-              ]),
-              const SizedBox(height: 4),
-              Text(item.payload['body']?.toString() ?? '', style: const TextStyle(fontStyle: FontStyle.italic)),
-              if (item.error != null) Text(item.error!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
-              if (problem)
-                Row(mainAxisSize: MainAxisSize.min, children: [
-                  TextButton(onPressed: () => sync.retry(item), child: const Text('Retry')),
-                  TextButton(onPressed: () => sync.discard(item), child: const Text('Discard')),
-                ]),
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OutboxBadge(item),
+                    const SizedBox(width: 8),
+                    Text(item.status == OutboxStatus.pending ? 'Not delivered yet' : '', style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(item.payload['body']?.toString() ?? '', style: const TextStyle(fontStyle: FontStyle.italic)),
+                if (item.error != null) Text(item.error!, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+                if (problem)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton(onPressed: () => sync.retry(item), child: const Text('Retry')),
+                      TextButton(onPressed: () => sync.discard(item), child: const Text('Discard')),
+                    ],
+                  ),
+              ],
+            ),
           ),
         ),
       ),

@@ -77,8 +77,7 @@ class Repository {
       if (f['overdue'] == 1 && !t.isOverdue) return false;
       if (search != null && search.isNotEmpty && !('${t.number} ${t.subject}'.toLowerCase().contains(search))) return false;
       return true;
-    }).toList()
-      ..sort((a, b) => (b.updatedAt ?? DateTime(0)).compareTo(a.updatedAt ?? DateTime(0)));
+    }).toList()..sort((a, b) => (b.updatedAt ?? DateTime(0)).compareTo(a.updatedAt ?? DateTime(0)));
   }
 
   Future<Loaded<Ticket>> ticket(int id) async {
@@ -102,16 +101,11 @@ class Repository {
     return t;
   }
 
-  Future<Ticket> assign(Ticket t, int? userId) =>
-      _ticketMutation(api.post('tickets/${t.id}/assign', body: {'assigned_to': userId, 'version': t.version}));
+  Future<Ticket> assign(Ticket t, int? userId) => _ticketMutation(api.post('tickets/${t.id}/assign', body: {'assigned_to': userId, 'version': t.version}));
 
-  Future<Ticket> changeStatus(Ticket t, String status, {String? note, String? resolutionNotes, int? version}) =>
-      _ticketMutation(api.post('tickets/${t.id}/status', body: {
-        'status': status,
-        'version': version ?? t.version,
-        'note': ?note,
-        'resolution_notes': ?resolutionNotes,
-      }));
+  Future<Ticket> changeStatus(Ticket t, String status, {String? note, String? resolutionNotes, int? version}) => _ticketMutation(
+    api.post('tickets/${t.id}/status', body: {'status': status, 'version': version ?? t.version, 'note': ?note, 'resolution_notes': ?resolutionNotes}),
+  );
 
   Future<Ticket> reopen(Ticket t, String reason, {int? version}) =>
       _ticketMutation(api.post('tickets/${t.id}/reopen', body: {'reason': reason, 'version': version ?? t.version}));

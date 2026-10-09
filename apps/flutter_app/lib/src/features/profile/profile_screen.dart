@@ -62,27 +62,34 @@ class ProfileScreen extends StatelessWidget {
     final me = context.watch<AuthController>().me!;
     return Scaffold(
       appBar: shellAppBar(context, 'Profile'),
-      body: ListView(padding: const EdgeInsets.all(8), children: [
-        SectionCard(
-          title: me.name,
-          trailing: TextButton.icon(onPressed: () => _edit(context), icon: const Icon(Icons.edit), label: const Text('Edit')),
-          child: Column(children: [
-            InfoRow('Email', me.email),
-            InfoRow('Role', me.roleLabel),
-            if (me.organizationName != null) InfoRow('Organization', me.organizationName),
-            InfoRow('Job title', me.jobTitle),
-            InfoRow('Phone', me.phone),
-            InfoRow('Timezone', me.timezone),
-          ]),
-        ),
-        Card(
-          margin: const EdgeInsets.all(8),
-          child: Column(children: [
-            ListTile(leading: const Icon(Icons.password), title: const Text('Change password'), onTap: () => _changePassword(context)),
-            ListTile(leading: const Icon(Icons.logout), title: const Text('Sign out'), onTap: () => _logout(context)),
-          ]),
-        ),
-      ]),
+      body: ListView(
+        padding: const EdgeInsets.all(8),
+        children: [
+          SectionCard(
+            title: me.name,
+            trailing: TextButton.icon(onPressed: () => _edit(context), icon: const Icon(Icons.edit), label: const Text('Edit')),
+            child: Column(
+              children: [
+                InfoRow('Email', me.email),
+                InfoRow('Role', me.roleLabel),
+                if (me.organizationName != null) InfoRow('Organization', me.organizationName),
+                InfoRow('Job title', me.jobTitle),
+                InfoRow('Phone', me.phone),
+                InfoRow('Timezone', me.timezone),
+              ],
+            ),
+          ),
+          Card(
+            margin: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                ListTile(leading: const Icon(Icons.password), title: const Text('Change password'), onTap: () => _changePassword(context)),
+                ListTile(leading: const Icon(Icons.logout), title: const Text('Sign out'), onTap: () => _logout(context)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

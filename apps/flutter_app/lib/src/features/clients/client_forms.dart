@@ -18,7 +18,12 @@ Future<Json?> editOrganization(BuildContext context, {Json? org, List<Json> slaP
       const FieldSpec('address', 'Address', type: FieldType.multiline),
       const FieldSpec('timezone', 'Timezone (e.g. Asia/Karachi)', required: true),
       if (slaPolicies.isNotEmpty)
-        FieldSpec('sla_policy_id', 'SLA policy', type: FieldType.select, options: {null: 'Default policy', for (final p in slaPolicies) p['id']: p['name'].toString()}),
+        FieldSpec(
+          'sla_policy_id',
+          'SLA policy',
+          type: FieldType.select,
+          options: {null: 'Default policy', for (final p in slaPolicies) p['id']: p['name'].toString()},
+        ),
       const FieldSpec('notes', 'Internal notes', type: FieldType.multiline),
       if (org != null) const FieldSpec('is_active', 'Active', type: FieldType.boolean),
     ],
@@ -61,10 +66,17 @@ Future<Json?> editDepartment(BuildContext context, int orgId, List<Json> sites, 
     initial: department ?? {},
     fields: [
       const FieldSpec('name', 'Name', required: true),
-      FieldSpec('site_id', 'Site', type: FieldType.select, options: _options(sites, none: 'All sites')),
+      FieldSpec(
+        'site_id',
+        'Site',
+        type: FieldType.select,
+        options: _options(sites, none: 'All sites'),
+      ),
     ],
     onSave: (v) async {
-      final res = department == null ? await api.post('organizations/$orgId/departments', body: v) : await api.patch('departments/${department['id']}', body: v);
+      final res = department == null
+          ? await api.post('organizations/$orgId/departments', body: v)
+          : await api.patch('departments/${department['id']}', body: v);
       return ((res as Map)['data'] as Map).cast<String, dynamic>();
     },
   );

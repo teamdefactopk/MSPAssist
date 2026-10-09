@@ -47,9 +47,9 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   Map<Object?, String> _roleOptions(Me me, {bool? staff}) => {
-        for (final r in me.inviteRoles)
-          if (staff == null || (_lookups!.roles.firstWhere((x) => x['value'] == r)['is_staff'] == staff)) r: _lookups!.roleLabel(r),
-      };
+    for (final r in me.inviteRoles)
+      if (staff == null || (_lookups!.roles.firstWhere((x) => x['value'] == r)['is_staff'] == staff)) r: _lookups!.roleLabel(r),
+  };
 
   Future<void> _invite(Me me) async {
     final orgs = _lookups!.organizations;
@@ -61,7 +61,13 @@ class _UsersScreenState extends State<UsersScreen> {
         const FieldSpec('name', 'Full name', required: true),
         const FieldSpec('email', 'Email', type: FieldType.email, required: true),
         FieldSpec('role', 'Role', type: FieldType.select, required: true, options: _roleOptions(me)),
-        if (me.isStaff) FieldSpec('organization_id', 'Client organization (client roles only)', type: FieldType.select, options: {null: '— CyberCraft staff —', for (final o in orgs) o['id']: o['name'].toString()}),
+        if (me.isStaff)
+          FieldSpec(
+            'organization_id',
+            'Client organization (client roles only)',
+            type: FieldType.select,
+            options: {null: '— CyberCraft staff —', for (final o in orgs) o['id']: o['name'].toString()},
+          ),
       ],
       onSave: (v) async => ((await context.services.api.post('invitations', body: v) as Map)['data'] as Map).cast<String, dynamic>(),
     );
@@ -81,7 +87,12 @@ class _UsersScreenState extends State<UsersScreen> {
       initial: user,
       fields: [
         const FieldSpec('name', 'Name', required: true),
-        FieldSpec('role', 'Role', type: FieldType.select, options: _roleOptions(me, staff: user['is_staff'] == true)..putIfAbsent(user['role'], () => user['role_label'].toString())),
+        FieldSpec(
+          'role',
+          'Role',
+          type: FieldType.select,
+          options: _roleOptions(me, staff: user['is_staff'] == true)..putIfAbsent(user['role'], () => user['role_label'].toString()),
+        ),
         const FieldSpec('job_title', 'Job title'),
         const FieldSpec('phone', 'Phone'),
         const FieldSpec('is_active', 'Active (deactivating signs the user out everywhere)', type: FieldType.boolean),
@@ -100,15 +111,18 @@ class _UsersScreenState extends State<UsersScreen> {
             title: const Text('Site access'),
             content: SizedBox(
               width: 400,
-              child: ListView(shrinkWrap: true, children: [
-                const Text('Client users only see tickets for these sites (plus tickets they raised).'),
-                for (final s in sites)
-                  CheckboxListTile(
-                    title: Text(s['name'].toString()),
-                    value: selectedSites.contains(s['id']),
-                    onChanged: (v) => setState(() => v == true ? selectedSites.add(s['id'] as int) : selectedSites.remove(s['id'])),
-                  ),
-              ]),
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  const Text('Client users only see tickets for these sites (plus tickets they raised).'),
+                  for (final s in sites)
+                    CheckboxListTile(
+                      title: Text(s['name'].toString()),
+                      value: selectedSites.contains(s['id']),
+                      onChanged: (v) => setState(() => v == true ? selectedSites.add(s['id'] as int) : selectedSites.remove(s['id'])),
+                    ),
+                ],
+              ),
             ),
             actions: [
               TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Skip')),
@@ -145,16 +159,28 @@ class _UsersScreenState extends State<UsersScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: shellAppBar(context, 'Users', actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))], bottom: const TabBar(tabs: [Tab(text: 'Users'), Tab(text: 'Invitations')])),
+        appBar: shellAppBar(
+          context,
+          'Users',
+          actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))],
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Users'),
+              Tab(text: 'Invitations'),
+            ],
+          ),
+        ),
         floatingActionButton: me.inviteRoles.isNotEmpty && _lookups != null
             ? FloatingActionButton.extended(onPressed: () => _invite(me), icon: const Icon(Icons.person_add), label: const Text('Invite'))
             : null,
         body: _error != null
             ? ErrorView(_error!, onRetry: _load)
             : _users == null
-                ? const Center(child: CircularProgressIndicator())
-                : TabBarView(children: [
-                    Column(children: [
+            ? const Center(child: CircularProgressIndicator())
+            : TabBarView(
+                children: [
+                  Column(
+                    children: [
                       Padding(
                         padding: const EdgeInsets.all(12),
                         child: TextField(
@@ -166,30 +192,49 @@ class _UsersScreenState extends State<UsersScreen> {
                         ),
                       ),
                       Expanded(
-                        child: ListView(padding: const EdgeInsets.only(bottom: 88), children: [
-                          for (final u in _users!)
-                            ListTile(
-                              leading: CircleAvatar(child: Icon(u['is_staff'] == true ? Icons.support_agent : Icons.person)),
-                              title: Text(u['name'].toString() + (u['is_active'] == true ? '' : ' (deactivated)')),
-                              subtitle: Text([u['role_label'], u['email'], (u['organization'] as Map?)?['name']].whereType<Object>().join(' · ')),
-                              trailing: u['id'] == me.id ? const Text('You') : const Icon(Icons.edit_outlined),
-                              onTap: u['id'] == me.id ? null : () => _edit(me, u),
-                            ),
-                        ]),
+                        child: ListView(
+                          padding: const EdgeInsets.only(bottom: 88),
+                          children: [
+                            for (final u in _users!)
+                              ListTile(
+                                leading: CircleAvatar(child: Icon(u['is_staff'] == true ? Icons.support_agent : Icons.person)),
+                                title: Text(u['name'].toString() + (u['is_active'] == true ? '' : ' (deactivated)')),
+                                subtitle: Text([u['role_label'], u['email'], (u['organization'] as Map?)?['name']].whereType<Object>().join(' · ')),
+                                trailing: u['id'] == me.id ? const Text('You') : const Icon(Icons.edit_outlined),
+                                onTap: u['id'] == me.id ? null : () => _edit(me, u),
+                              ),
+                          ],
+                        ),
                       ),
-                    ]),
-                    _invitations!.isEmpty
-                        ? const EmptyView('No invitations sent yet.')
-                        : ListView(padding: const EdgeInsets.only(bottom: 88), children: [
+                    ],
+                  ),
+                  _invitations!.isEmpty
+                      ? const EmptyView('No invitations sent yet.')
+                      : ListView(
+                          padding: const EdgeInsets.only(bottom: 88),
+                          children: [
                             for (final i in _invitations!)
                               ListTile(
-                                leading: Icon(switch (i['status']) { 'accepted' => Icons.check_circle, 'pending' => Icons.mark_email_unread, _ => Icons.block }),
+                                leading: Icon(switch (i['status']) {
+                                  'accepted' => Icons.check_circle,
+                                  'pending' => Icons.mark_email_unread,
+                                  _ => Icons.block,
+                                }),
                                 title: Text('${i['name']} <${i['email']}>'),
-                                subtitle: Text([i['role_label'], (i['organization'] as Map?)?['name'], i['status'], 'expires ${fmtDate(parseDate(i['expires_at']))}'].whereType<Object>().join(' · ')),
+                                subtitle: Text(
+                                  [
+                                    i['role_label'],
+                                    (i['organization'] as Map?)?['name'],
+                                    i['status'],
+                                    'expires ${fmtDate(parseDate(i['expires_at']))}',
+                                  ].whereType<Object>().join(' · '),
+                                ),
                                 trailing: i['status'] == 'pending' ? TextButton(onPressed: () => _revoke(i), child: const Text('Revoke')) : null,
                               ),
-                          ]),
-                  ]),
+                          ],
+                        ),
+                ],
+              ),
       ),
     );
   }

@@ -12,11 +12,13 @@ void main() {
 
   test('builds URLs, sends bearer token and JSON', () async {
     late http.Request seen;
-    final api = ApiClient(config, client: MockClient((req) async {
-      seen = req;
-      return http.Response('{"data":[]}', 200);
-    }))
-      ..token = 'secret';
+    final api = ApiClient(
+      config,
+      client: MockClient((req) async {
+        seen = req;
+        return http.Response('{"data":[]}', 200);
+      }),
+    )..token = 'secret';
     await api.get('tickets', query: {'status': 'open', 'empty': null, 'page': 2});
     expect(seen.url.toString(), 'https://support.example.com/api/v1/tickets?status=open&page=2');
     expect(seen.headers['Authorization'], 'Bearer secret');
@@ -24,12 +26,30 @@ void main() {
   });
 
   test('maps validation and conflict responses', () async {
-    final api = ApiClient(config, client: MockClient((req) async {
-      if (req.url.path.endsWith('status')) {
-        return http.Response(jsonEncode({'message': 'changed', 'code': 'version_conflict', 'current': {'id': 1}}), 409);
-      }
-      return http.Response(jsonEncode({'message': 'invalid', 'errors': {'subject': ['Subject is required.']}}), 422);
-    }));
+    final api = ApiClient(
+      config,
+      client: MockClient((req) async {
+        if (req.url.path.endsWith('status')) {
+          return http.Response(
+            jsonEncode({
+              'message': 'changed',
+              'code': 'version_conflict',
+              'current': {'id': 1},
+            }),
+            409,
+          );
+        }
+        return http.Response(
+          jsonEncode({
+            'message': 'invalid',
+            'errors': {
+              'subject': ['Subject is required.'],
+            },
+          }),
+          422,
+        );
+      }),
+    );
     await expectLater(api.post('tickets'), throwsA(isA<ApiException>().having((e) => e.firstError, 'firstError', 'Subject is required.')));
     await expectLater(
       api.post('tickets/1/status'),

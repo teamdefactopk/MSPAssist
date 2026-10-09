@@ -43,7 +43,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _editPolicy([Json? policy]) async {
-    final saved = await showDialog<bool>(context: context, builder: (_) => _SlaPolicyDialog(policy: policy));
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (_) => _SlaPolicyDialog(policy: policy),
+    );
     if (saved == true) _load();
   }
 
@@ -53,68 +56,112 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context,
       title: category == null ? 'New category' : 'Edit category',
       initial: category ?? {'is_active': true},
-      fields: const [FieldSpec('name', 'Name', required: true), FieldSpec('is_active', 'Active', type: FieldType.boolean)],
-      onSave: (v) async => ((category == null ? await api.post('categories', body: v) : await api.patch('categories/${category['id']}', body: v)) as Map)['data'] as Json,
+      fields: const [
+        FieldSpec('name', 'Name', required: true),
+        FieldSpec('is_active', 'Active', type: FieldType.boolean),
+      ],
+      onSave: (v) async =>
+          ((category == null ? await api.post('categories', body: v) : await api.patch('categories/${category['id']}', body: v)) as Map)['data'] as Json,
     );
     if (res != null) _load();
   }
 
   @override
   Widget build(BuildContext context) => DefaultTabController(
-        length: 2,
-        child: Scaffold(
-          appBar: shellAppBar(context, 'Settings', bottom: const TabBar(tabs: [Tab(text: 'SLA policies'), Tab(text: 'Categories')])),
-          body: _error != null
-              ? ErrorView(_error!, onRetry: _load)
-              : _policies == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : TabBarView(children: [
-                      Scaffold(
-                        floatingActionButton: FloatingActionButton.extended(heroTag: 'sla', onPressed: () => _editPolicy(), icon: const Icon(Icons.add), label: const Text('New policy')),
-                        body: ListView(padding: const EdgeInsets.only(bottom: 88), children: [
-                          for (final p in _policies!)
-                            SectionCard(
-                              title: '${p['name']}${p['is_default'] == true ? ' (default)' : ''}',
-                              trailing: TextButton.icon(onPressed: () => _editPolicy(p), icon: const Icon(Icons.edit), label: const Text('Edit')),
-                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                InfoRow('Timezone', p['timezone']?.toString()),
-                                InfoRow('Business hours', p['business_hours'] == null ? '24x7' : _hoursSummary((p['business_hours'] as Map).cast())),
-                                InfoRow('Pauses on', ((p['pause_statuses'] as List?) ?? []).join(', ')),
-                                InfoRow('Warning at', '${p['warning_percent']}% of resolution time'),
-                                const SizedBox(height: 8),
-                                Table(
-                                  columnWidths: const {0: FixedColumnWidth(110)},
-                                  children: [
-                                    const TableRow(children: [Text('Priority', style: TextStyle(fontWeight: FontWeight.bold)), Text('Response', style: TextStyle(fontWeight: FontWeight.bold)), Text('Resolution', style: TextStyle(fontWeight: FontWeight.bold))]),
-                                    for (final t in (p['targets'] as List).cast<Map>())
-                                      TableRow(children: [Text(t['priority'].toString()), Text(fmtMinutes(t['response_minutes'] as int)), Text(fmtMinutes(t['resolution_minutes'] as int))]),
-                                  ],
-                                ),
-                              ]),
-                            ),
-                        ]),
-                      ),
-                      Scaffold(
-                        floatingActionButton: FloatingActionButton.extended(heroTag: 'cat', onPressed: () => _editCategory(), icon: const Icon(Icons.add), label: const Text('New category')),
-                        body: ListView(padding: const EdgeInsets.only(bottom: 88), children: [
-                          for (final c in _categories!)
-                            ListTile(
-                              leading: Icon(c['is_active'] == true ? Icons.label_outline : Icons.label_off_outlined),
-                              title: Text(c['name'].toString()),
-                              subtitle: c['is_active'] == true ? null : const Text('Inactive'),
-                              trailing: const Icon(Icons.edit_outlined),
-                              onTap: () => _editCategory(c),
-                            ),
-                        ]),
-                      ),
-                    ]),
+    length: 2,
+    child: Scaffold(
+      appBar: shellAppBar(
+        context,
+        'Settings',
+        bottom: const TabBar(
+          tabs: [
+            Tab(text: 'SLA policies'),
+            Tab(text: 'Categories'),
+          ],
         ),
-      );
+      ),
+      body: _error != null
+          ? ErrorView(_error!, onRetry: _load)
+          : _policies == null
+          ? const Center(child: CircularProgressIndicator())
+          : TabBarView(
+              children: [
+                Scaffold(
+                  floatingActionButton: FloatingActionButton.extended(
+                    heroTag: 'sla',
+                    onPressed: () => _editPolicy(),
+                    icon: const Icon(Icons.add),
+                    label: const Text('New policy'),
+                  ),
+                  body: ListView(
+                    padding: const EdgeInsets.only(bottom: 88),
+                    children: [
+                      for (final p in _policies!)
+                        SectionCard(
+                          title: '${p['name']}${p['is_default'] == true ? ' (default)' : ''}',
+                          trailing: TextButton.icon(onPressed: () => _editPolicy(p), icon: const Icon(Icons.edit), label: const Text('Edit')),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              InfoRow('Timezone', p['timezone']?.toString()),
+                              InfoRow('Business hours', p['business_hours'] == null ? '24x7' : _hoursSummary((p['business_hours'] as Map).cast())),
+                              InfoRow('Pauses on', ((p['pause_statuses'] as List?) ?? []).join(', ')),
+                              InfoRow('Warning at', '${p['warning_percent']}% of resolution time'),
+                              const SizedBox(height: 8),
+                              Table(
+                                columnWidths: const {0: FixedColumnWidth(110)},
+                                children: [
+                                  const TableRow(
+                                    children: [
+                                      Text('Priority', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      Text('Response', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      Text('Resolution', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                  for (final t in (p['targets'] as List).cast<Map>())
+                                    TableRow(
+                                      children: [
+                                        Text(t['priority'].toString()),
+                                        Text(fmtMinutes(t['response_minutes'] as int)),
+                                        Text(fmtMinutes(t['resolution_minutes'] as int)),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Scaffold(
+                  floatingActionButton: FloatingActionButton.extended(
+                    heroTag: 'cat',
+                    onPressed: () => _editCategory(),
+                    icon: const Icon(Icons.add),
+                    label: const Text('New category'),
+                  ),
+                  body: ListView(
+                    padding: const EdgeInsets.only(bottom: 88),
+                    children: [
+                      for (final c in _categories!)
+                        ListTile(
+                          leading: Icon(c['is_active'] == true ? Icons.label_outline : Icons.label_off_outlined),
+                          title: Text(c['name'].toString()),
+                          subtitle: c['is_active'] == true ? null : const Text('Inactive'),
+                          trailing: const Icon(Icons.edit_outlined),
+                          onTap: () => _editCategory(c),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+    ),
+  );
 
-  static String _hoursSummary(Json hours) => hours.entries
-      .where((e) => (e.value as List).isNotEmpty)
-      .map((e) => '${e.key} ${(e.value as List).map((i) => '${i[0]}-${i[1]}').join(',')}')
-      .join('; ');
+  static String _hoursSummary(Json hours) =>
+      hours.entries.where((e) => (e.value as List).isNotEmpty).map((e) => '${e.key} ${(e.value as List).map((i) => '${i[0]}-${i[1]}').join(',')}').join('; ');
 }
 
 const _days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -155,15 +202,28 @@ class _SlaPolicyDialogState extends State<_SlaPolicyDialog> {
     _isDefault = p['is_default'] == true;
     final hours = (p['business_hours'] as Map?)?.cast<String, dynamic>();
     _twentyFourSeven = widget.policy != null && hours == null;
-    _pause = {...((p['pause_statuses'] as List?) ?? ['waiting_client']).cast<String>()};
+    _pause = {
+      ...((p['pause_statuses'] as List?) ?? ['waiting_client']).cast<String>(),
+    };
     for (final d in _days) {
-      final intervals = (hours?[d] as List?) ?? (widget.policy == null && !['sat', 'sun'].contains(d) ? [['09:00', '18:00']] : []);
+      final intervals =
+          (hours?[d] as List?) ??
+          (widget.policy == null && !['sat', 'sun'].contains(d)
+              ? [
+                  ['09:00', '18:00'],
+                ]
+              : []);
       _enabled[d] = intervals.isNotEmpty;
       _open[d] = TextEditingController(text: intervals.isNotEmpty ? intervals.first[0].toString() : '09:00');
       _close[d] = TextEditingController(text: intervals.isNotEmpty ? intervals.first[1].toString() : '18:00');
     }
     final targets = {for (final t in ((p['targets'] as List?) ?? []).cast<Map>()) t['priority']: t};
-    const defaults = {'critical': [30, 240], 'high': [60, 480], 'medium': [240, 1440], 'low': [480, 2880]};
+    const defaults = {
+      'critical': [30, 240],
+      'high': [60, 480],
+      'medium': [240, 1440],
+      'low': [480, 2880],
+    };
     for (final pr in _priorities) {
       _response[pr] = TextEditingController(text: '${targets[pr]?['response_minutes'] ?? defaults[pr]![0]}');
       _resolution[pr] = TextEditingController(text: '${targets[pr]?['resolution_minutes'] ?? defaults[pr]![1]}');
@@ -184,7 +244,14 @@ class _SlaPolicyDialogState extends State<_SlaPolicyDialog> {
       'holidays': _holidays.text.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList(),
       'business_hours': _twentyFourSeven
           ? null
-          : {for (final d in _days) d: _enabled[d]! ? [[_open[d]!.text, _close[d]!.text]] : []},
+          : {
+              for (final d in _days)
+                d: _enabled[d]!
+                    ? [
+                        [_open[d]!.text, _close[d]!.text],
+                      ]
+                    : [],
+            },
       'targets': [
         for (final p in _priorities) {'priority': p, 'response_minutes': int.parse(_response[p]!.text), 'resolution_minutes': int.parse(_resolution[p]!.text)},
       ],
@@ -210,54 +277,133 @@ class _SlaPolicyDialogState extends State<_SlaPolicyDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: Text(widget.policy == null ? 'New SLA policy' : 'Edit SLA policy'),
-        content: SizedBox(
-          width: 560,
-          child: Form(
-            key: _form,
-            child: SingleChildScrollView(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                TextFormField(controller: _name, decoration: const InputDecoration(labelText: 'Name'), validator: (v) => v!.trim().isEmpty ? 'Required' : null),
-                const SizedBox(height: 8),
-                TextFormField(controller: _tz, decoration: const InputDecoration(labelText: 'Timezone (IANA, e.g. Asia/Karachi)')),
-                SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Default policy'), value: _isDefault, onChanged: (v) => setState(() => _isDefault = v)),
-                SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('24x7 (ignore business hours)'), value: _twentyFourSeven, onChanged: (v) => setState(() => _twentyFourSeven = v)),
-                if (!_twentyFourSeven)
-                  for (final d in _days)
-                    Row(children: [
-                      SizedBox(width: 90, child: CheckboxListTile(contentPadding: EdgeInsets.zero, dense: true, title: Text(d), value: _enabled[d], onChanged: (v) => setState(() => _enabled[d] = v!))),
+    title: Text(widget.policy == null ? 'New SLA policy' : 'Edit SLA policy'),
+    content: SizedBox(
+      width: 560,
+      child: Form(
+        key: _form,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _name,
+                decoration: const InputDecoration(labelText: 'Name'),
+                validator: (v) => v!.trim().isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _tz,
+                decoration: const InputDecoration(labelText: 'Timezone (IANA, e.g. Asia/Karachi)'),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Default policy'),
+                value: _isDefault,
+                onChanged: (v) => setState(() => _isDefault = v),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('24x7 (ignore business hours)'),
+                value: _twentyFourSeven,
+                onChanged: (v) => setState(() => _twentyFourSeven = v),
+              ),
+              if (!_twentyFourSeven)
+                for (final d in _days)
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 90,
+                        child: CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text(d),
+                          value: _enabled[d],
+                          onChanged: (v) => setState(() => _enabled[d] = v!),
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      SizedBox(width: 90, child: TextFormField(controller: _open[d], enabled: _enabled[d], decoration: const InputDecoration(isDense: true, labelText: 'Open'), validator: _enabled[d]! ? _time : null)),
+                      SizedBox(
+                        width: 90,
+                        child: TextFormField(
+                          controller: _open[d],
+                          enabled: _enabled[d],
+                          decoration: const InputDecoration(isDense: true, labelText: 'Open'),
+                          validator: _enabled[d]! ? _time : null,
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      SizedBox(width: 90, child: TextFormField(controller: _close[d], enabled: _enabled[d], decoration: const InputDecoration(isDense: true, labelText: 'Close'), validator: _enabled[d]! ? _time : null)),
-                    ]),
-                const SizedBox(height: 8),
-                TextFormField(controller: _holidays, decoration: const InputDecoration(labelText: 'Holidays (YYYY-MM-DD, comma separated)')),
-                const SizedBox(height: 8),
-                const Text('Pause the SLA clock while:'),
-                CheckboxListTile(dense: true, title: const Text('Waiting for Client'), value: _pause.contains('waiting_client'), onChanged: (v) => setState(() => v! ? _pause.add('waiting_client') : _pause.remove('waiting_client'))),
-                CheckboxListTile(dense: true, title: const Text('Waiting for Vendor'), value: _pause.contains('waiting_vendor'), onChanged: (v) => setState(() => v! ? _pause.add('waiting_vendor') : _pause.remove('waiting_vendor'))),
-                TextFormField(controller: _warning, decoration: const InputDecoration(labelText: 'Warn when this % of resolution time has elapsed'), validator: _int),
-                const SizedBox(height: 12),
-                const Text('Targets (business minutes)', style: TextStyle(fontWeight: FontWeight.bold)),
-                for (final p in _priorities)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(children: [
-                      SizedBox(width: 90, child: Text(p)),
-                      Expanded(child: TextFormField(controller: _response[p], decoration: const InputDecoration(isDense: true, labelText: 'Response'), validator: _int)),
-                      const SizedBox(width: 8),
-                      Expanded(child: TextFormField(controller: _resolution[p], decoration: const InputDecoration(isDense: true, labelText: 'Resolution'), validator: _int)),
-                    ]),
+                      SizedBox(
+                        width: 90,
+                        child: TextFormField(
+                          controller: _close[d],
+                          enabled: _enabled[d],
+                          decoration: const InputDecoration(isDense: true, labelText: 'Close'),
+                          validator: _enabled[d]! ? _time : null,
+                        ),
+                      ),
+                    ],
                   ),
-                if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-              ]),
-            ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _holidays,
+                decoration: const InputDecoration(labelText: 'Holidays (YYYY-MM-DD, comma separated)'),
+              ),
+              const SizedBox(height: 8),
+              const Text('Pause the SLA clock while:'),
+              CheckboxListTile(
+                dense: true,
+                title: const Text('Waiting for Client'),
+                value: _pause.contains('waiting_client'),
+                onChanged: (v) => setState(() => v! ? _pause.add('waiting_client') : _pause.remove('waiting_client')),
+              ),
+              CheckboxListTile(
+                dense: true,
+                title: const Text('Waiting for Vendor'),
+                value: _pause.contains('waiting_vendor'),
+                onChanged: (v) => setState(() => v! ? _pause.add('waiting_vendor') : _pause.remove('waiting_vendor')),
+              ),
+              TextFormField(
+                controller: _warning,
+                decoration: const InputDecoration(labelText: 'Warn when this % of resolution time has elapsed'),
+                validator: _int,
+              ),
+              const SizedBox(height: 12),
+              const Text('Targets (business minutes)', style: TextStyle(fontWeight: FontWeight.bold)),
+              for (final p in _priorities)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 90, child: Text(p)),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _response[p],
+                          decoration: const InputDecoration(isDense: true, labelText: 'Response'),
+                          validator: _int,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _resolution[p],
+                          decoration: const InputDecoration(isDense: true, labelText: 'Resolution'),
+                          validator: _int,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            ],
           ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: _busy ? null : _save, child: const Text('Save')),
-        ],
-      );
+      ),
+    ),
+    actions: [
+      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+      FilledButton(onPressed: _busy ? null : _save, child: const Text('Save')),
+    ],
+  );
 }

@@ -25,8 +25,10 @@ Future<Json?> showEntityForm(
   required List<FieldSpec> fields,
   Json initial = const {},
   required Future<Json> Function(Json values) onSave,
-}) =>
-    showDialog<Json>(context: context, builder: (_) => _EntityFormDialog(title: title, fields: fields, initial: initial, onSave: onSave));
+}) => showDialog<Json>(
+  context: context,
+  builder: (_) => _EntityFormDialog(title: title, fields: fields, initial: initial, onSave: onSave),
+);
 
 class _EntityFormDialog extends StatefulWidget {
   const _EntityFormDialog({required this.title, required this.fields, required this.initial, required this.onSave});
@@ -98,7 +100,13 @@ class _EntityFormDialogState extends State<_EntityFormDialog> {
           initialValue: f.options.containsKey(_values[f.key]) ? _values[f.key] : null,
           isExpanded: true,
           decoration: InputDecoration(labelText: f.label + (f.required ? ' *' : ''), errorText: err),
-          items: [for (final o in f.options.entries) DropdownMenuItem(value: o.key, child: Text(o.value, overflow: TextOverflow.ellipsis))],
+          items: [
+            for (final o in f.options.entries)
+              DropdownMenuItem(
+                value: o.key,
+                child: Text(o.value, overflow: TextOverflow.ellipsis),
+              ),
+          ],
           validator: (v) => f.required && v == null ? 'Required' : null,
           onChanged: (v) => setState(() => _values[f.key] = v),
         );
@@ -132,21 +140,22 @@ class _EntityFormDialogState extends State<_EntityFormDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: Text(widget.title),
-        content: SizedBox(
-          width: 480,
-          child: Form(
-            key: _form,
-            child: SingleChildScrollView(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                for (final f in widget.fields) Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: _field(f)),
-              ]),
-            ),
+    title: Text(widget.title),
+    content: SizedBox(
+      width: 480,
+      child: Form(
+        key: _form,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [for (final f in widget.fields) Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: _field(f))],
           ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: _busy ? null : _save, child: const Text('Save')),
-        ],
-      );
+      ),
+    ),
+    actions: [
+      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+      FilledButton(onPressed: _busy ? null : _save, child: const Text('Save')),
+    ],
+  );
 }

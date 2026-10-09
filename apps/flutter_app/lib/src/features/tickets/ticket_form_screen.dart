@@ -87,32 +87,36 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
     final services = context.services;
     final me = context.read<AuthController>().me!;
     try {
-      await services.sync.enqueue(OutboxItem(
-        id: _uuid,
-        kind: 'create_ticket',
-        ticketUuid: _uuid,
-        payload: {
-          'uuid': _uuid,
-          'organization_id': _orgId,
-          'site_id': _siteId,
-          'department_id': ?_departmentId,
-          'equipment_id': ?_equipmentId,
-          'category_id': ?_categoryId,
-          'priority': _priority,
-          'subject': _subject.text.trim(),
-          'description': _description.text.trim(),
-          'source': kIsWeb ? 'web' : (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS ? 'mobile' : 'desktop'),
-          if (_assigneeId != null && me.can('assign_tickets')) 'assigned_to': _assigneeId,
-        },
-      ));
+      await services.sync.enqueue(
+        OutboxItem(
+          id: _uuid,
+          kind: 'create_ticket',
+          ticketUuid: _uuid,
+          payload: {
+            'uuid': _uuid,
+            'organization_id': _orgId,
+            'site_id': _siteId,
+            'department_id': ?_departmentId,
+            'equipment_id': ?_equipmentId,
+            'category_id': ?_categoryId,
+            'priority': _priority,
+            'subject': _subject.text.trim(),
+            'description': _description.text.trim(),
+            'source': kIsWeb ? 'web' : (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS ? 'mobile' : 'desktop'),
+            if (_assigneeId != null && me.can('assign_tickets')) 'assigned_to': _assigneeId,
+          },
+        ),
+      );
       if (_files.isNotEmpty) {
         final ids = await queueUploads(services.sync, _files, ticketUuid: _uuid);
-        await services.sync.enqueue(OutboxItem(
-          id: const Uuid().v4(),
-          kind: 'send_message',
-          ticketUuid: _uuid,
-          payload: {'uuid': const Uuid().v4(), 'body': 'Attached ${_files.length} file(s).', 'attachment_uuids': ids, 'depends_on': ids},
-        ));
+        await services.sync.enqueue(
+          OutboxItem(
+            id: const Uuid().v4(),
+            kind: 'send_message',
+            ticketUuid: _uuid,
+            payload: {'uuid': const Uuid().v4(), 'body': 'Attached ${_files.length} file(s).', 'attachment_uuids': ids, 'depends_on': ids},
+          ),
+        );
       }
       await services.sync.syncNow(force: true);
       if (!mounted) return;
@@ -145,47 +149,52 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
       body: _error != null
           ? ErrorView(_error!, onRetry: _load)
           : _lookups == null
-              ? const Center(child: CircularProgressIndicator())
-              : Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 760),
-                    child: Form(
-                      key: _form,
-                      child: ListView(padding: const EdgeInsets.all(16), children: [
-                        if (me.isStaff)
-                          DropdownButtonFormField<int>(
-                            initialValue: _orgId,
-                            isExpanded: true,
-                            decoration: const InputDecoration(labelText: 'Client *'),
-                            items: [for (final o in _lookups!.organizations) DropdownMenuItem(value: o['id'] as int, child: Text(o['name'].toString()))],
-                            validator: (v) => v == null ? 'Select a client' : null,
-                            onChanged: (v) {
-                              setState(() {
-                                _orgId = v;
-                                _siteId = null;
-                                _departmentId = null;
-                                _equipmentId = null;
-                                _departments = [];
-                                _equipment = [];
-                              });
-                              _loadOrgData();
-                            },
-                          ),
-                        const SizedBox(height: 12),
+          ? const Center(child: CircularProgressIndicator())
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Form(
+                  key: _form,
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      if (me.isStaff)
                         DropdownButtonFormField<int>(
-                          key: ValueKey('site-$_orgId'),
-                          initialValue: _siteId,
+                          initialValue: _orgId,
                           isExpanded: true,
-                          decoration: const InputDecoration(labelText: 'Site *'),
-                          items: [for (final s in _sites()) DropdownMenuItem(value: s['id'] as int, child: Text(s['name'].toString()))],
-                          validator: (v) => v == null ? 'Select a site' : null,
-                          onChanged: (v) => setState(() {
-                            _siteId = v;
-                            _equipmentId = null;
-                          }),
+                          decoration: const InputDecoration(labelText: 'Client *'),
+                          items: [for (final o in _lookups!.organizations) DropdownMenuItem(value: o['id'] as int, child: Text(o['name'].toString()))],
+                          validator: (v) => v == null ? 'Select a client' : null,
+                          onChanged: (v) {
+                            setState(() {
+                              _orgId = v;
+                              _siteId = null;
+                              _departmentId = null;
+                              _equipmentId = null;
+                              _departments = [];
+                              _equipment = [];
+                            });
+                            _loadOrgData();
+                          },
                         ),
-                        const SizedBox(height: 12),
-                        Wrap(spacing: 12, runSpacing: 12, children: [
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<int>(
+                        key: ValueKey('site-$_orgId'),
+                        initialValue: _siteId,
+                        isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'Site *'),
+                        items: [for (final s in _sites()) DropdownMenuItem(value: s['id'] as int, child: Text(s['name'].toString()))],
+                        validator: (v) => v == null ? 'Select a site' : null,
+                        onChanged: (v) => setState(() {
+                          _siteId = v;
+                          _equipmentId = null;
+                        }),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
                           SizedBox(
                             width: 230,
                             child: DropdownButtonFormField<String>(
@@ -253,23 +262,27 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
                                 onChanged: (v) => setState(() => _assigneeId = v),
                               ),
                             ),
-                        ]),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _subject,
-                          maxLength: 200,
-                          decoration: const InputDecoration(labelText: 'Subject *'),
-                          validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
-                        ),
-                        TextFormField(
-                          controller: _description,
-                          minLines: 5,
-                          maxLines: 12,
-                          decoration: const InputDecoration(labelText: 'Description *', alignLabelWithHint: true),
-                          validator: (v) => v == null || v.trim().isEmpty ? 'Describe the problem' : null,
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(spacing: 8, runSpacing: 8, children: [
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _subject,
+                        maxLength: 200,
+                        decoration: const InputDecoration(labelText: 'Subject *'),
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                      ),
+                      TextFormField(
+                        controller: _description,
+                        minLines: 5,
+                        maxLines: 12,
+                        decoration: const InputDecoration(labelText: 'Description *', alignLabelWithHint: true),
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Describe the problem' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
                           for (final f in _files) PendingUploadChip(f, onRemove: () => setState(() => _files.remove(f))),
                           OutlinedButton.icon(
                             onPressed: () async {
@@ -288,20 +301,24 @@ class _TicketFormScreenState extends State<TicketFormScreen> {
                               icon: const Icon(Icons.photo_camera),
                               label: const Text('Take photo'),
                             ),
-                        ]),
-                        const SizedBox(height: 24),
-                        FilledButton.icon(
-                          onPressed: _busy ? null : _submit,
-                          icon: _busy ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.send),
-                          label: const Text('Submit ticket'),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text('If you are offline, the ticket is kept as a draft on this device and sent automatically when the connection returns.',
-                            style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      ]),
-                    ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
+                        onPressed: _busy ? null : _submit,
+                        icon: _busy ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.send),
+                        label: const Text('Submit ticket'),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'If you are offline, the ticket is kept as a draft on this device and sent automatically when the connection returns.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
                   ),
                 ),
+              ),
+            ),
     );
   }
 }

@@ -69,15 +69,19 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
           context: context,
           builder: (c) => AlertDialog(
             title: const Text('Ticket changed by someone else'),
-            content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Your change was not saved because the ticket was updated in the meantime.'),
-              const SizedBox(height: 12),
-              InfoRow('Status', '${current.statusLabel} → ${server.statusLabel}'),
-              InfoRow('Assignee', '${current.assignee?.name ?? 'Unassigned'} → ${server.assignee?.name ?? 'Unassigned'}'),
-              InfoRow('Priority', '${current.priority} → ${server.priority}'),
-              const SizedBox(height: 12),
-              Text('Your change: $description'),
-            ]),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Your change was not saved because the ticket was updated in the meantime.'),
+                const SizedBox(height: 12),
+                InfoRow('Status', '${current.statusLabel} → ${server.statusLabel}'),
+                InfoRow('Assignee', '${current.assignee?.name ?? 'Unassigned'} → ${server.assignee?.name ?? 'Unassigned'}'),
+                InfoRow('Priority', '${current.priority} → ${server.priority}'),
+                const SizedBox(height: 12),
+                Text('Your change: $description'),
+              ],
+            ),
             actions: [
               TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Discard my change')),
               FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Apply my change')),
@@ -133,22 +137,42 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         length: 3,
         child: Scaffold(
           appBar: AppBar(title: title, actions: [refresh]),
-          body: Column(children: [
-            if (_fromCache) const OfflineBanner(message: 'Offline — ticket actions are disabled until you reconnect.'),
-            Expanded(
-              child: Row(children: [
-                Expanded(
-                  flex: 5,
-                  child: Column(children: [
-                    const TabBar(tabs: [Tab(text: 'Details'), Tab(text: 'Work'), Tab(text: 'History')]),
-                    Expanded(child: TabBarView(children: [details, work, _HistoryView(key: ValueKey('h$_historyKey'), ticketId: t.id)])),
-                  ]),
+          body: Column(
+            children: [
+              if (_fromCache) const OfflineBanner(message: 'Offline — ticket actions are disabled until you reconnect.'),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        children: [
+                          const TabBar(
+                            tabs: [
+                              Tab(text: 'Details'),
+                              Tab(text: 'Work'),
+                              Tab(text: 'History'),
+                            ],
+                          ),
+                          Expanded(
+                            child: TabBarView(
+                              children: [
+                                details,
+                                work,
+                                _HistoryView(key: ValueKey('h$_historyKey'), ticketId: t.id),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const VerticalDivider(width: 1),
+                    Expanded(flex: 4, child: chat),
+                  ],
                 ),
-                const VerticalDivider(width: 1),
-                Expanded(flex: 4, child: chat),
-              ]),
-            ),
-          ]),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -159,17 +183,33 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         appBar: AppBar(
           title: title,
           actions: [refresh],
-          bottom: TabBar(isScrollable: true, tabs: [
-            Tab(child: Badge(isLabelVisible: t.unreadCount > 0, label: Text('${t.unreadCount}'), child: const Text('Conversation'))),
-            const Tab(text: 'Details'),
-            const Tab(text: 'Work'),
-            const Tab(text: 'History'),
-          ]),
+          bottom: TabBar(
+            isScrollable: true,
+            tabs: [
+              Tab(
+                child: Badge(isLabelVisible: t.unreadCount > 0, label: Text('${t.unreadCount}'), child: const Text('Conversation')),
+              ),
+              const Tab(text: 'Details'),
+              const Tab(text: 'Work'),
+              const Tab(text: 'History'),
+            ],
+          ),
         ),
-        body: Column(children: [
-          if (_fromCache) const OfflineBanner(message: 'Offline — ticket actions are disabled until you reconnect.'),
-          Expanded(child: TabBarView(children: [chat, details, work, _HistoryView(key: ValueKey('h$_historyKey'), ticketId: t.id)])),
-        ]),
+        body: Column(
+          children: [
+            if (_fromCache) const OfflineBanner(message: 'Offline — ticket actions are disabled until you reconnect.'),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  chat,
+                  details,
+                  work,
+                  _HistoryView(key: ValueKey('h$_historyKey'), ticketId: t.id),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -197,41 +237,52 @@ class _DetailsPane extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = ticket;
     final repo = context.services.repo;
-    return ListView(padding: const EdgeInsets.all(8), children: [
-      SectionCard(
-        title: t.subject,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Wrap(spacing: 6, runSpacing: 6, children: [
-            StatusPill(t.status, t.statusLabel),
-            PriorityPill(t.priority),
-            if (t.isOverdue) const Pill('Overdue', color: Colors.red, icon: Icons.alarm),
-            if (t.reopenCount > 0) Pill('Reopened ×${t.reopenCount}', color: Colors.deepOrange, icon: Icons.replay),
-          ]),
-          const SizedBox(height: 12),
-          SelectableText(t.description),
-        ]),
-      ),
-      SectionCard(title: 'Actions', child: _actions(context, repo)),
-      if (t.resolutionNotes != null && t.resolutionNotes!.isNotEmpty)
-        SectionCard(title: 'Resolution', child: SelectableText(t.resolutionNotes!)),
-      SectionCard(
-        title: 'Details',
-        child: Column(children: [
-          InfoRow('Ticket', t.number),
-          InfoRow('Client', t.organization?.name),
-          InfoRow('Site', t.site?.name),
-          InfoRow('Department', t.department?.name),
-          InfoRow('Equipment', t.equipment?.name),
-          InfoRow('Category', t.category?.name),
-          InfoRow('Requester', t.requester?.name),
-          InfoRow('Technician', t.assignee?.name ?? 'Unassigned'),
-          InfoRow('Created', fmtDateTime(t.createdAt)),
-          InfoRow('Resolved', fmtDateTime(t.resolvedAt)),
-          InfoRow('Closed', fmtDateTime(t.closedAt)),
-        ]),
-      ),
-      SectionCard(title: 'SLA', child: SlaPanel(t)),
-    ]);
+    return ListView(
+      padding: const EdgeInsets.all(8),
+      children: [
+        SectionCard(
+          title: t.subject,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  StatusPill(t.status, t.statusLabel),
+                  PriorityPill(t.priority),
+                  if (t.isOverdue) const Pill('Overdue', color: Colors.red, icon: Icons.alarm),
+                  if (t.reopenCount > 0) Pill('Reopened ×${t.reopenCount}', color: Colors.deepOrange, icon: Icons.replay),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SelectableText(t.description),
+            ],
+          ),
+        ),
+        SectionCard(title: 'Actions', child: _actions(context, repo)),
+        if (t.resolutionNotes != null && t.resolutionNotes!.isNotEmpty) SectionCard(title: 'Resolution', child: SelectableText(t.resolutionNotes!)),
+        SectionCard(
+          title: 'Details',
+          child: Column(
+            children: [
+              InfoRow('Ticket', t.number),
+              InfoRow('Client', t.organization?.name),
+              InfoRow('Site', t.site?.name),
+              InfoRow('Department', t.department?.name),
+              InfoRow('Equipment', t.equipment?.name),
+              InfoRow('Category', t.category?.name),
+              InfoRow('Requester', t.requester?.name),
+              InfoRow('Technician', t.assignee?.name ?? 'Unassigned'),
+              InfoRow('Created', fmtDateTime(t.createdAt)),
+              InfoRow('Resolved', fmtDateTime(t.resolvedAt)),
+              InfoRow('Closed', fmtDateTime(t.closedAt)),
+            ],
+          ),
+        ),
+        SectionCard(title: 'SLA', child: SlaPanel(t)),
+      ],
+    );
   }
 
   Widget _actions(BuildContext context, repo) {
@@ -240,67 +291,76 @@ class _DetailsPane extends StatelessWidget {
     final transitions = lookups.transitionsFor(t.status);
 
     if (me.isStaff && t.isActive && (me.can('assign_tickets') || (me.can('self_assign') && (t.assignee == null || t.assignee!.id == me.id)))) {
-      buttons.add(OutlinedButton.icon(
-        onPressed: busy ? null : () => _assign(context),
-        icon: const Icon(Icons.person_add_alt),
-        label: Text(t.assignee == null ? 'Assign' : 'Reassign'),
-      ));
+      buttons.add(
+        OutlinedButton.icon(
+          onPressed: busy ? null : () => _assign(context),
+          icon: const Icon(Icons.person_add_alt),
+          label: Text(t.assignee == null ? 'Assign' : 'Reassign'),
+        ),
+      );
     }
     if (canWork) {
       for (final s in transitions) {
         if (s == 'resolved') {
           buttons.add(FilledButton.icon(onPressed: busy ? null : () => _resolve(context), icon: const Icon(Icons.check_circle), label: const Text('Resolve')));
         } else {
-          buttons.add(OutlinedButton(
-            onPressed: busy ? null : () => onMutate('Set status to ${lookups.statusLabel(s)}', (v) => context.services.repo.changeStatus(t, s, version: v)),
-            child: Text(_actionLabel(s)),
-          ));
+          buttons.add(
+            OutlinedButton(
+              onPressed: busy ? null : () => onMutate('Set status to ${lookups.statusLabel(s)}', (v) => context.services.repo.changeStatus(t, s, version: v)),
+              child: Text(_actionLabel(s)),
+            ),
+          );
         }
       }
       if (t.isActive) {
-        buttons.add(OutlinedButton.icon(onPressed: busy ? null : () => _priority(context), icon: const Icon(Icons.flag_outlined), label: const Text('Priority')));
+        buttons.add(
+          OutlinedButton.icon(onPressed: busy ? null : () => _priority(context), icon: const Icon(Icons.flag_outlined), label: const Text('Priority')),
+        );
       }
     }
     final isOwner = me.isClient && (t.requester?.id == me.id || me.role == 'client_admin');
     if (isOwner && t.status == 'resolved') {
-      buttons.add(FilledButton.icon(
-        onPressed: busy ? null : () => onMutate('Accept resolution and close', (v) => context.services.repo.changeStatus(t, 'closed', version: v)),
-        icon: const Icon(Icons.done_all),
-        label: const Text('Accept & close'),
-      ));
+      buttons.add(
+        FilledButton.icon(
+          onPressed: busy ? null : () => onMutate('Accept resolution and close', (v) => context.services.repo.changeStatus(t, 'closed', version: v)),
+          icon: const Icon(Icons.done_all),
+          label: const Text('Accept & close'),
+        ),
+      );
     }
     if (!t.isActive && (canWork || isOwner)) {
       buttons.add(OutlinedButton.icon(onPressed: busy ? null : () => _reopen(context), icon: const Icon(Icons.replay), label: const Text('Reopen')));
     }
     if (buttons.isEmpty) {
-      return Text(me.isClient
-          ? 'CyberCraft support is handling this ticket. Use the conversation to add information.'
-          : 'This ticket is assigned to another technician. Ask a support manager to reassign it.');
+      return Text(
+        me.isClient
+            ? 'CyberCraft support is handling this ticket. Use the conversation to add information.'
+            : 'This ticket is assigned to another technician. Ask a support manager to reassign it.',
+      );
     }
     return Wrap(spacing: 8, runSpacing: 8, children: buttons);
   }
 
   String _actionLabel(String status) => switch (status) {
-        'in_progress' => 'Start work',
-        'waiting_client' => 'Wait for client',
-        'waiting_vendor' => 'Wait for vendor',
-        'closed' => 'Close',
-        _ => lookups.statusLabel(status),
-      };
+    'in_progress' => 'Start work',
+    'waiting_client' => 'Wait for client',
+    'waiting_vendor' => 'Wait for vendor',
+    'closed' => 'Close',
+    _ => lookups.statusLabel(status),
+  };
 
   Future<void> _assign(BuildContext context) async {
     final options = me.can('assign_tickets') ? lookups.technicians : lookups.technicians.where((u) => u['id'] == me.id).toList();
     final selected = await showDialog<int?>(
       context: context,
-      builder: (c) => SimpleDialog(title: const Text('Assign technician'), children: [
-        if (me.can('assign_tickets') && ticket.assignee != null)
-          SimpleDialogOption(onPressed: () => Navigator.pop(c, -1), child: const Text('Unassign')),
-        for (final u in options)
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(c, u['id'] as int),
-            child: Text('${u['name']}${u['id'] == me.id ? ' (me)' : ''}'),
-          ),
-      ]),
+      builder: (c) => SimpleDialog(
+        title: const Text('Assign technician'),
+        children: [
+          if (me.can('assign_tickets') && ticket.assignee != null) SimpleDialogOption(onPressed: () => Navigator.pop(c, -1), child: const Text('Unassign')),
+          for (final u in options)
+            SimpleDialogOption(onPressed: () => Navigator.pop(c, u['id'] as int), child: Text('${u['name']}${u['id'] == me.id ? ' (me)' : ''}')),
+        ],
+      ),
     );
     if (selected == null || !context.mounted) return;
     final userId = selected == -1 ? null : selected;
@@ -324,10 +384,12 @@ class _DetailsPane extends StatelessWidget {
   Future<void> _priority(BuildContext context) async {
     final p = await showDialog<String>(
       context: context,
-      builder: (c) => SimpleDialog(title: const Text('Change priority'), children: [
-        for (final p in lookups.priorities)
-          SimpleDialogOption(onPressed: () => Navigator.pop(c, p['value'] as String), child: Text(p['label'].toString())),
-      ]),
+      builder: (c) => SimpleDialog(
+        title: const Text('Change priority'),
+        children: [
+          for (final p in lookups.priorities) SimpleDialogOption(onPressed: () => Navigator.pop(c, p['value'] as String), child: Text(p['label'].toString())),
+        ],
+      ),
     );
     if (p == null || p == ticket.priority || !context.mounted) return;
     await onMutate('Change priority to $p', (v) => context.services.repo.updateTicket(ticket, {'priority': p}, version: v));

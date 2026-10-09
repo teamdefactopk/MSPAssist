@@ -13,32 +13,35 @@ class AuthLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: AutofillGroup(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                      Icon(Icons.support_agent, size: 48, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(height: 8),
-                      Text('MSPAssist', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
-                      Text('CyberCraft IT Support', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
-                      const SizedBox(height: 16),
-                      Text(title, style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: 16),
-                      ...children,
-                    ]),
-                  ),
+    body: Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: AutofillGroup(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Icon(Icons.support_agent, size: 48, color: Theme.of(context).colorScheme.primary),
+                    const SizedBox(height: 8),
+                    Text('MSPAssist', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
+                    Text('CyberCraft IT Support', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(height: 16),
+                    Text(title, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 16),
+                    ...children,
+                  ],
                 ),
               ),
             ),
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 String? _required(String? v) => v == null || v.trim().isEmpty ? 'Required' : null;
@@ -79,10 +82,14 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => AuthLayout(title: 'Sign in', children: [
-        Form(
-          key: _form,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+  Widget build(BuildContext context) => AuthLayout(
+    title: 'Sign in',
+    children: [
+      Form(
+        key: _form,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             TextFormField(
               key: const Key('login-email'),
               controller: _email,
@@ -106,10 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
               validator: _required,
               onFieldSubmitted: (_) => _submit(),
             ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            ],
+            if (_error != null) ...[const SizedBox(height: 12), Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error))],
             const SizedBox(height: 16),
             FilledButton(
               key: const Key('login-submit'),
@@ -117,11 +121,16 @@ class _LoginScreenState extends State<LoginScreen> {
               child: _busy ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Sign in'),
             ),
             TextButton(onPressed: () => context.go('/forgot-password'), child: const Text('Forgot password?')),
-            const Text('Accounts are created by invitation from CyberCraft or your organization administrator.',
-                textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey)),
-          ]),
+            const Text(
+              'Accounts are created by invitation from CyberCraft or your organization administrator.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
         ),
-      ]);
+      ),
+    ],
+  );
 }
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -150,18 +159,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => AuthLayout(title: 'Reset your password', children: [
-        if (_message != null)
-          Text(_message!)
-        else
-          Form(
-            key: _form,
-            child: TextFormField(controller: _email, decoration: const InputDecoration(labelText: 'Email'), validator: _validEmail, onFieldSubmitted: (_) => _submit()),
+  Widget build(BuildContext context) => AuthLayout(
+    title: 'Reset your password',
+    children: [
+      if (_message != null)
+        Text(_message!)
+      else
+        Form(
+          key: _form,
+          child: TextFormField(
+            controller: _email,
+            decoration: const InputDecoration(labelText: 'Email'),
+            validator: _validEmail,
+            onFieldSubmitted: (_) => _submit(),
           ),
-        const SizedBox(height: 16),
-        if (_message == null) FilledButton(onPressed: _busy ? null : _submit, child: const Text('Send reset link')),
-        TextButton(onPressed: () => context.go('/login'), child: const Text('Back to sign in')),
-      ]);
+        ),
+      const SizedBox(height: 16),
+      if (_message == null) FilledButton(onPressed: _busy ? null : _submit, child: const Text('Send reset link')),
+      TextButton(onPressed: () => context.go('/login'), child: const Text('Back to sign in')),
+    ],
+  );
 }
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -183,12 +200,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (!_form.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      await context.services.api.post('auth/reset-password', body: {
-        'token': widget.token,
-        'email': widget.email,
-        'password': _password.text,
-        'password_confirmation': _confirm.text,
-      });
+      await context.services.api.post(
+        'auth/reset-password',
+        body: {'token': widget.token, 'email': widget.email, 'password': _password.text, 'password_confirmation': _confirm.text},
+      );
       setState(() => _done = true);
     } catch (e) {
       if (mounted) showError(context, e);
@@ -198,17 +213,25 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => AuthLayout(title: 'Choose a new password', children: [
-        if (widget.token.isEmpty)
-          const Text('This reset link is incomplete. Request a new one.')
-        else if (_done)
-          const Text('Your password has been reset.')
-        else
-          Form(
-            key: _form,
-            child: Column(children: [
+  Widget build(BuildContext context) => AuthLayout(
+    title: 'Choose a new password',
+    children: [
+      if (widget.token.isEmpty)
+        const Text('This reset link is incomplete. Request a new one.')
+      else if (_done)
+        const Text('Your password has been reset.')
+      else
+        Form(
+          key: _form,
+          child: Column(
+            children: [
               InfoRow('Account', widget.email),
-              TextFormField(controller: _password, obscureText: true, decoration: const InputDecoration(labelText: 'New password'), validator: _validPassword),
+              TextFormField(
+                controller: _password,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'New password'),
+                validator: _validPassword,
+              ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _confirm,
@@ -217,11 +240,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 validator: (v) => v != _password.text ? 'Passwords do not match' : null,
               ),
               const SizedBox(height: 16),
-              SizedBox(width: double.infinity, child: FilledButton(onPressed: _busy ? null : _submit, child: const Text('Reset password'))),
-            ]),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(onPressed: _busy ? null : _submit, child: const Text('Reset password')),
+              ),
+            ],
           ),
-        TextButton(onPressed: () => context.go('/login'), child: const Text('Go to sign in')),
-      ]);
+        ),
+      TextButton(onPressed: () => context.go('/login'), child: const Text('Go to sign in')),
+    ],
+  );
 }
 
 class AcceptInvitationScreen extends StatefulWidget {
@@ -263,12 +291,10 @@ class _AcceptInvitationScreenState extends State<AcceptInvitationScreen> {
     if (!_form.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      await context.services.api.post('invitations/accept', body: {
-        'token': widget.token,
-        'name': _name.text.trim(),
-        'password': _password.text,
-        'password_confirmation': _confirm.text,
-      });
+      await context.services.api.post(
+        'invitations/accept',
+        body: {'token': widget.token, 'name': _name.text.trim(), 'password': _password.text, 'password_confirmation': _confirm.text},
+      );
       setState(() => _done = true);
     } catch (e) {
       if (mounted) showError(context, e);
@@ -278,24 +304,36 @@ class _AcceptInvitationScreenState extends State<AcceptInvitationScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => AuthLayout(title: 'Accept invitation', children: [
-        if (_error != null)
-          Text(errorText(_error!))
-        else if (_invite == null)
-          const Center(child: CircularProgressIndicator())
-        else if (_done)
-          const Text('Your account is ready. Sign in with your email and new password.')
-        else
-          Form(
-            key: _form,
-            child: Column(children: [
+  Widget build(BuildContext context) => AuthLayout(
+    title: 'Accept invitation',
+    children: [
+      if (_error != null)
+        Text(errorText(_error!))
+      else if (_invite == null)
+        const Center(child: CircularProgressIndicator())
+      else if (_done)
+        const Text('Your account is ready. Sign in with your email and new password.')
+      else
+        Form(
+          key: _form,
+          child: Column(
+            children: [
               InfoRow('Email', _invite!['email']?.toString()),
               InfoRow('Role', _invite!['role_label']?.toString()),
               if (_invite!['organization'] != null) InfoRow('Organization', _invite!['organization'].toString()),
               const SizedBox(height: 8),
-              TextFormField(controller: _name, decoration: const InputDecoration(labelText: 'Your name'), validator: _required),
+              TextFormField(
+                controller: _name,
+                decoration: const InputDecoration(labelText: 'Your name'),
+                validator: _required,
+              ),
               const SizedBox(height: 12),
-              TextFormField(controller: _password, obscureText: true, decoration: const InputDecoration(labelText: 'Password'), validator: _validPassword),
+              TextFormField(
+                controller: _password,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Password'),
+                validator: _validPassword,
+              ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _confirm,
@@ -304,9 +342,14 @@ class _AcceptInvitationScreenState extends State<AcceptInvitationScreen> {
                 validator: (v) => v != _password.text ? 'Passwords do not match' : null,
               ),
               const SizedBox(height: 16),
-              SizedBox(width: double.infinity, child: FilledButton(onPressed: _busy ? null : _submit, child: const Text('Create account'))),
-            ]),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(onPressed: _busy ? null : _submit, child: const Text('Create account')),
+              ),
+            ],
           ),
-        TextButton(onPressed: () => context.go('/login'), child: const Text('Go to sign in')),
-      ]);
+        ),
+      TextButton(onPressed: () => context.go('/login'), child: const Text('Go to sign in')),
+    ],
+  );
 }

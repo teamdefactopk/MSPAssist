@@ -59,7 +59,11 @@ class _ClientsScreenState extends State<ClientsScreen> {
       });
     }
     return Scaffold(
-      appBar: shellAppBar(context, 'Clients', actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh), tooltip: 'Refresh')]),
+      appBar: shellAppBar(
+        context,
+        'Clients',
+        actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh), tooltip: 'Refresh')],
+      ),
       floatingActionButton: me.can('manage_clients')
           ? FloatingActionButton.extended(
               onPressed: () async {
@@ -70,47 +74,49 @@ class _ClientsScreenState extends State<ClientsScreen> {
               label: const Text('New client'),
             )
           : null,
-      body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextField(
-            decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search clients', isDense: true),
-            onChanged: (v) {
-              _debounce?.cancel();
-              _debounce = Timer(const Duration(milliseconds: 400), () {
-                _search = v.trim();
-                _load();
-              });
-            },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search clients', isDense: true),
+              onChanged: (v) {
+                _debounce?.cancel();
+                _debounce = Timer(const Duration(milliseconds: 400), () {
+                  _search = v.trim();
+                  _load();
+                });
+              },
+            ),
           ),
-        ),
-        if (_fromCache) const OfflineBanner(),
-        Expanded(
-          child: _error != null && _orgs == null
-              ? ErrorView(_error!, onRetry: _load)
-              : _orgs == null
-                  ? const Center(child: CircularProgressIndicator())
-                  : _orgs!.isEmpty
-                      ? const EmptyView('No clients yet.')
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(bottom: 88),
-                          itemCount: _orgs!.length,
-                          itemBuilder: (_, i) {
-                            final o = _orgs![i];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              child: ListTile(
-                                leading: CircleAvatar(child: Text(o['code'].toString().substring(0, 1))),
-                                title: Text(o['name'].toString()),
-                                subtitle: Text('${o['code']} · ${o['sites_count'] ?? 0} site(s)${o['is_active'] == false ? ' · inactive' : ''}'),
-                                trailing: Chip(label: Text('${o['open_tickets_count'] ?? 0} active')),
-                                onTap: () => context.go('/clients/${o['id']}'),
-                              ),
-                            );
-                          },
+          if (_fromCache) const OfflineBanner(),
+          Expanded(
+            child: _error != null && _orgs == null
+                ? ErrorView(_error!, onRetry: _load)
+                : _orgs == null
+                ? const Center(child: CircularProgressIndicator())
+                : _orgs!.isEmpty
+                ? const EmptyView('No clients yet.')
+                : ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 88),
+                    itemCount: _orgs!.length,
+                    itemBuilder: (_, i) {
+                      final o = _orgs![i];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        child: ListTile(
+                          leading: CircleAvatar(child: Text(o['code'].toString().substring(0, 1))),
+                          title: Text(o['name'].toString()),
+                          subtitle: Text('${o['code']} · ${o['sites_count'] ?? 0} site(s)${o['is_active'] == false ? ' · inactive' : ''}'),
+                          trailing: Chip(label: Text('${o['open_tickets_count'] ?? 0} active')),
+                          onTap: () => context.go('/clients/${o['id']}'),
                         ),
-        ),
-      ]),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

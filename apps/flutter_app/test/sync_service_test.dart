@@ -15,10 +15,10 @@ class FakeServer {
   bool offline = false;
 
   MockClient get client => MockClient((req) async {
-        if (offline) throw http.ClientException('offline');
-        requests.add(req);
-        return handler(req);
-      });
+    if (offline) throw http.ClientException('offline');
+    requests.add(req);
+    return handler(req);
+  });
 }
 
 http.Response json(Object body, [int status = 200]) => http.Response(jsonEncode(body), status, headers: {'content-type': 'application/json'});
@@ -37,7 +37,12 @@ void main() {
     sync = SyncService(api, store, interval: const Duration(hours: 1), now: () => clock);
   });
 
-  OutboxItem ticketDraft(String id) => OutboxItem(id: id, kind: 'create_ticket', ticketUuid: id, payload: {'uuid': id, 'subject': 'Printer', 'organization_id': 1, 'site_id': 1, 'description': 'x'});
+  OutboxItem ticketDraft(String id) => OutboxItem(
+    id: id,
+    kind: 'create_ticket',
+    ticketUuid: id,
+    payload: {'uuid': id, 'subject': 'Printer', 'organization_id': 1, 'site_id': 1, 'description': 'x'},
+  );
 
   test('offline items stay pending with backoff and are never reported as delivered', () async {
     server.offline = true;
@@ -61,8 +66,16 @@ void main() {
 
   test('replays in order, resolving the server id of an offline-created ticket', () async {
     server.handler = (req) {
-      if (req.url.path.endsWith('/tickets')) return json({'data': {'id': 42, 'uuid': 't-1', 'number': 'CC-1'}}, 201);
-      if (req.url.path.endsWith('/tickets/42/messages')) return json({'data': {'id': 7, 'uuid': 'm-1', 'body': 'hi'}}, 201);
+      if (req.url.path.endsWith('/tickets')) {
+        return json({
+          'data': {'id': 42, 'uuid': 't-1', 'number': 'CC-1'},
+        }, 201);
+      }
+      if (req.url.path.endsWith('/tickets/42/messages')) {
+        return json({
+          'data': {'id': 7, 'uuid': 'm-1', 'body': 'hi'},
+        }, 201);
+      }
       return json({}, 404);
     };
     final events = <SyncEvent>[];
@@ -82,7 +95,11 @@ void main() {
     var calls = 0;
     server.handler = (req) {
       calls++;
-      return calls == 1 ? json({'message': 'Server error'}, 503) : json({'data': {'id': 1}}, 200);
+      return calls == 1
+          ? json({'message': 'Server error'}, 503)
+          : json({
+              'data': {'id': 1},
+            }, 200);
     };
     await sync.enqueue(OutboxItem(id: 'm-9', kind: 'send_message', ticketUuid: 'x', payload: {'uuid': 'm-9', 'ticket_id': 5, 'body': 'hello'}));
     await sync.syncNow();
@@ -95,11 +112,18 @@ void main() {
 
   test('validation errors fail, conflicts are flagged, dependents stay blocked', () async {
     server.handler = (req) => req.url.path.endsWith('/tickets')
-        ? json({'message': 'The given data was invalid.', 'errors': {'site_id': ['The selected site is not available to you.']}}, 422)
+        ? json({
+            'message': 'The given data was invalid.',
+            'errors': {
+              'site_id': ['The selected site is not available to you.'],
+            },
+          }, 422)
         : json({'message': 'This ticket is closed.', 'code': 'ticket_closed'}, 409);
     await store.saveOutbox(ticketDraft('t-1'));
     await store.saveOutbox(OutboxItem(id: 'm-1', kind: 'send_message', ticketUuid: 't-1', payload: {'uuid': 'm-1', 'body': 'hi'}, createdAt: DateTime(2027)));
-    await store.saveOutbox(OutboxItem(id: 'm-2', kind: 'send_message', ticketUuid: 'other', payload: {'uuid': 'm-2', 'ticket_id': 9, 'body': 'late'}, createdAt: DateTime(2028)));
+    await store.saveOutbox(
+      OutboxItem(id: 'm-2', kind: 'send_message', ticketUuid: 'other', payload: {'uuid': 'm-2', 'ticket_id': 9, 'body': 'late'}, createdAt: DateTime(2028)),
+    );
     await sync.syncNow();
 
     final items = {for (final i in await store.outbox()) i.id: i};

@@ -6,8 +6,7 @@ http.Client createHttpClient() => http.Client();
 
 String? readXsrfToken() => null;
 
-Future<String> saveDownload(Uint8List bytes, String filename, String mimeType) async =>
-    throw UnsupportedError('Downloads are not supported on this platform');
+Future<String> saveDownload(Uint8List bytes, String filename, String mimeType) async => throw UnsupportedError('Downloads are not supported on this platform');
 
 bool get usesCookieAuth => false;
 

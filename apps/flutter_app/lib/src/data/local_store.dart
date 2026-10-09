@@ -35,28 +35,28 @@ class OutboxItem {
   final String? ticketUuid;
 
   Map<String, Object?> toRow() => {
-        'id': id,
-        'kind': kind,
-        'payload': jsonEncode(payload),
-        'status': status.name,
-        'attempts': attempts,
-        'error': error,
-        'created_at': createdAt.toUtc().toIso8601String(),
-        'next_attempt_at': nextAttemptAt?.toUtc().toIso8601String(),
-        'ticket_uuid': ticketUuid,
-      };
+    'id': id,
+    'kind': kind,
+    'payload': jsonEncode(payload),
+    'status': status.name,
+    'attempts': attempts,
+    'error': error,
+    'created_at': createdAt.toUtc().toIso8601String(),
+    'next_attempt_at': nextAttemptAt?.toUtc().toIso8601String(),
+    'ticket_uuid': ticketUuid,
+  };
 
   static OutboxItem fromRow(Map<String, Object?> r) => OutboxItem(
-        id: r['id'] as String,
-        kind: r['kind'] as String,
-        payload: (jsonDecode(r['payload'] as String) as Map).cast<String, dynamic>(),
-        status: OutboxStatus.values.byName(r['status'] as String),
-        attempts: (r['attempts'] as int?) ?? 0,
-        error: r['error'] as String?,
-        createdAt: DateTime.parse(r['created_at'] as String).toLocal(),
-        nextAttemptAt: r['next_attempt_at'] == null ? null : DateTime.parse(r['next_attempt_at'] as String).toLocal(),
-        ticketUuid: r['ticket_uuid'] as String?,
-      );
+    id: r['id'] as String,
+    kind: r['kind'] as String,
+    payload: (jsonDecode(r['payload'] as String) as Map).cast<String, dynamic>(),
+    status: OutboxStatus.values.byName(r['status'] as String),
+    attempts: (r['attempts'] as int?) ?? 0,
+    error: r['error'] as String?,
+    createdAt: DateTime.parse(r['created_at'] as String).toLocal(),
+    nextAttemptAt: r['next_attempt_at'] == null ? null : DateTime.parse(r['next_attempt_at'] as String).toLocal(),
+    ticketUuid: r['ticket_uuid'] as String?,
+  );
 }
 
 /// Account-scoped local storage: a JSON cache of server records plus the
@@ -103,10 +103,8 @@ class MemoryLocalStore implements LocalStore {
   Future<void> putJson(String key, Json value) async => _cache[key] = jsonEncode(value);
 
   @override
-  Future<List<Json>> getJsonByPrefix(String prefix) async => _cache.entries
-      .where((e) => e.key.startsWith(prefix))
-      .map((e) => (jsonDecode(e.value) as Map).cast<String, dynamic>())
-      .toList();
+  Future<List<Json>> getJsonByPrefix(String prefix) async =>
+      _cache.entries.where((e) => e.key.startsWith(prefix)).map((e) => (jsonDecode(e.value) as Map).cast<String, dynamic>()).toList();
 
   @override
   Future<void> delete(String key) async => _cache.remove(key);

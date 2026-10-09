@@ -40,12 +40,15 @@ void main() {
   });
 
   testWidgets('wrong credentials show the server message', (tester) async {
-    final api = ApiClient(AppConfig.forBaseUrl('https://support.example.com/api/v1'), client: MockClient((req) async {
-      if (req.url.path.endsWith('auth/token')) {
-        return http.Response('{"message":"invalid","errors":{"email":["These credentials do not match an active account."]}}', 422);
-      }
-      return http.Response('{}', 401);
-    }));
+    final api = ApiClient(
+      AppConfig.forBaseUrl('https://support.example.com/api/v1'),
+      client: MockClient((req) async {
+        if (req.url.path.endsWith('auth/token')) {
+          return http.Response('{"message":"invalid","errors":{"email":["These credentials do not match an active account."]}}', 422);
+        }
+        return http.Response('{}', 401);
+      }),
+    );
     final services = AppServices.create(api: api, store: MemoryLocalStore(), tokens: MemoryTokenStore());
     await tester.pumpWidget(MspAssistApp(services: services));
     await services.auth.restore();
