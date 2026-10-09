@@ -103,3 +103,8 @@ lib/
 - No voice/video calls or WhatsApp integration (out of scope).
 - Android/iOS push notifications, signed release builds and app-store
   packaging are not configured.
+
+## Growing past one server
+
+The path from one cPanel server to several servers, object storage and
+real-time chat is in [scaling.md](scaling.md).

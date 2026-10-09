@@ -3,7 +3,8 @@
 This guide deploys the Laravel API and the Flutter web dashboard on one
 domain (for example `support.example.com`) on standard cPanel hosting with
 HTTPS and cron. No Docker, Redis, Node.js process or queue daemon is needed.
-Production deployment is always manual; CI never deploys.
+Production deployment is always manual; CI never deploys. When one server
+is no longer enough, see [scaling.md](scaling.md).
 
 ## 1. Requirements
 
