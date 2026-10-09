@@ -121,6 +121,20 @@ class AccessControlTest extends TestCase
             ->assertStatus(422)->assertJsonPath('code', 'invalid_assignee');
     }
 
+    public function test_invalid_assignee_on_create_does_not_create_ticket(): void
+    {
+        $this->actingAsUser($this->manager);
+        $this->postJson('/api/v1/tickets', [
+            'uuid' => (string) Str::uuid(), 'organization_id' => $this->orgA->id, 'site_id' => $this->siteA1->id,
+            'subject' => 'x', 'description' => 'y', 'assigned_to' => $this->clientUserA->id,
+        ])->assertUnprocessable()->assertJsonValidationErrors('assigned_to');
+        $this->assertDatabaseCount('tickets', 0);
+
+        // A client cannot assign at creation time; the field is ignored.
+        $t = $this->createTicket($this->clientAdminA, null, ['assigned_to' => $this->tech->id]);
+        $this->assertNull($t['assignee']);
+    }
+
     public function test_reports_are_scoped(): void
     {
         $this->createTicket($this->clientAdminA);

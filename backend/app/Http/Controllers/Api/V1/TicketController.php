@@ -139,8 +139,14 @@ class TicketController extends Controller
             'equipment_id' => ['nullable', 'integer', new BelongsToOrganization('equipment', $orgId)],
             'contact_id' => ['nullable', 'integer', new BelongsToOrganization('contacts', $orgId)],
         ]);
-        if (! empty($data['assigned_to']) && ! $user->isManager()) {
-            unset($data['assigned_to']);
+        if (! empty($data['assigned_to'])) {
+            $assignee = $user->isManager() ? User::find($data['assigned_to']) : null;
+            if (! $assignee) {
+                unset($data['assigned_to']);
+            } elseif (! $assignee->isStaff() || ! $assignee->is_active) {
+                // Validate before creating so a bad assignee never leaves a half-done ticket.
+                throw ValidationException::withMessages(['assigned_to' => 'Tickets can only be assigned to active CyberCraft staff.']);
+            }
         }
 
         [$ticket, $created] = $this->workflow->create($user, $data);

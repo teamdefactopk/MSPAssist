@@ -73,8 +73,12 @@ class Repository {
       if (f['state'] == 'active' && !t.isActive) return false;
       if (f['state'] == 'inactive' && t.isActive) return false;
       if (f['priority'] != null && f['priority'] != t.priority) return false;
-      if (f['organization_id'] != null && t.organization?.id != f['organization_id']) return false;
-      if (f['overdue'] == 1 && !t.isOverdue) return false;
+      final assigned = f['assigned_to']?.toString();
+      if (assigned == 'none' && t.assignee != null) return false;
+      if (assigned != null && int.tryParse(assigned) != null && t.assignee?.id != int.parse(assigned)) return false;
+      if (f['organization_id'] != null && '${t.organization?.id}' != '${f['organization_id']}') return false;
+      if (f['site_id'] != null && '${t.site?.id}' != '${f['site_id']}') return false;
+      if ('${f['overdue']}' == '1' && !t.isOverdue) return false;
       if (search != null && search.isNotEmpty && !('${t.number} ${t.subject}'.toLowerCase().contains(search))) return false;
       return true;
     }).toList()..sort((a, b) => (b.updatedAt ?? DateTime(0)).compareTo(a.updatedAt ?? DateTime(0)));
